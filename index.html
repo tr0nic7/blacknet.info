@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>blacknet.info</title>
+<meta name="description" content="Persönliche Website von Christoph">
+<link rel="preload" as="image" href="img/christoph-800.webp?v=6" media="(max-width: 800px)">
+<link rel="preload" as="image" href="img/christoph.webp?v=6" media="(min-width: 801px)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%230a0a0a%22/%3E%3Ccircle cx=%2223%22 cy=%2223%22 r=%224%22 fill=%22%23d4ff3a%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css?v=1792774484">
+</head>
+<body>
+<!-- ============================================================
+     TEXTE ANPASSEN: Alle Platzhaltertexte sind mit
+     "TEXT:"-Kommentaren markiert. Bilder liegen unter img/:
+       img/christoph(.webp|.jpg|-800.*)  = Porträt (Basis-Ebene)
+       img/overlay(.webp|.jpg|-800.*)    = Helm-Ebene (Maus-Reveal)
+     ============================================================ -->
+
+<header class="nav">
+  <a class="nav-logo" href="#top" data-wipe="//home" aria-label="Home">C<span>.</span></a>
+  <nav>
+    <a href="#ueber" class="nav-about" data-wipe="//about me" data-fly>//about me</a>
+    <a href="#kontakt" class="nav-about" data-wipe="//kontakt" data-fly>//kontakt</a>
+  </nav>
+</header>
+
+<main id="top">
+  <!-- ===================== HERO ===================== -->
+  <section class="hero" id="hero">
+    <!-- Hintergrund-Ebene: Bengalo-Rauch links/rechts (Bild: img/bengalo*.webp/.jpg) -->
+    <div class="hero-smoke" aria-hidden="true">
+      <div class="smoke smoke-l"><i></i></div>
+      <div class="smoke smoke-r"><i></i></div>
+    </div>
+    <canvas id="hero-canvas" aria-hidden="true"></canvas>
+    <!-- Fallback ohne JavaScript -->
+    <noscript><img class="hero-fallback" src="img/christoph.jpg" alt="Porträt von Christoph"></noscript>
+    <div class="hero-text">
+      <p class="hero-kicker">
+        <!-- TEXT: Hero-Zeile oben -->Aktivist / Sicherheitsforscher
+      </p>
+      <!-- Kipp-Animation: Klasse "hero-name--tilt" entfernen = aus.
+           Punkt = .sq (grünes Quadrat). Rückgängig: Text wieder auf Christoph. -->
+      <h1 class="hero-name hero-name--tilt" aria-label="blacknet.info"><span class="name-txt">//blacknet</span><span class="sq" aria-hidden="true"></span><span class="name-txt">info</span></h1>
+      <!-- Hinweis rechts (früher „Maus bewegen“). Rückgängig: Element entfernen. -->
+      <!-- TEXT: Hero-Terminalzeile (Befehl in .term-cmd) -->
+      <p class="hero-term"><span class="term-prompt" aria-hidden="true">$</span><span class="term-cmd" id="term-cmd">chown -R us:them /world</span><span class="term-caret" aria-hidden="true"></span></p>
+    </div>
+    <p class="hero-hint" aria-hidden="true"><span class="hint-desktop">Christoph F<span class="sq"></span></span><span class="hint-touch">Christoph F<span class="sq"></span></span></p>
+    <div class="scroll-cue" aria-hidden="true"><span></span></div>
+  </section>
+
+
+  <!-- ===================== ÜBER MICH ===================== -->
+  <section class="section about" id="ueber">
+    <div class="section-label reveal">01</div>
+    <h2 class="section-title section-title--lc reveal"><span class="slashes">//</span>about me</h2>
+    <!-- TEXT: Über mich – Einleitung (Rollen + Lead-Zeile) -->
+    <p class="about-statement reveal">
+      <span class="role">IT-Systemelektroniker,</span>
+      <span class="role role-outline">KI-Entwickler</span>
+      <span class="role-and">und</span>
+      <span class="role role-accent">Webdesigner</span>
+    </p>
+    <p class="about-lead reveal">mit Fokus auf IT-Infrastruktur, Systemadministration, intelligente KI-Lösungen und moderne Webentwicklung.</p>
+
+    <!-- TEXT: Kernkompetenzen -->
+    <div class="skills">
+      <h3 class="skills-title reveal">Kernkompetenzen</h3>
+      <div class="skill-groups">
+        <div class="skill-group reveal">
+          <div class="skill-head"><span class="skill-idx">A</span>Infrastruktur &amp; Systeme</div>
+          <ul class="skill-list">
+            <li>Windows &amp; Linux</li><li>Netzwerktechnik</li><li>Active Directory</li><li>Microsoft 365</li><li>Citrix</li>
+          </ul>
+        </div>
+        <div class="skill-group reveal">
+          <div class="skill-head"><span class="skill-idx">B</span>Security &amp; Betrieb</div>
+          <ul class="skill-list">
+            <li>IT-Security &amp; Datenschutz</li><li>Monitoring (Icinga, Checkmk, Nagios)</li><li>Automatisierung mit PowerShell &amp; Python</li>
+          </ul>
+        </div>
+        <div class="skill-group reveal">
+          <div class="skill-head"><span class="skill-idx">C</span>KI &amp; Web</div>
+          <ul class="skill-list">
+            <li>Lokale LLMs &amp; KI-Agenten</li><li>Webdesign &amp; Webentwicklung</li><li>Open Source</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== KONTAKT ===================== -->
+  <section class="section contact" id="kontakt">
+    <div class="section-label reveal">02</div>
+    <h2 class="section-title section-title--lc reveal"><span class="slashes">//</span>kontakt</h2>
+    <!-- TEXT: E-Mail-Adresse eintragen (href und Text) -->
+    <a class="contact-mail reveal" href="mailto:info@blacknet.info">info@blacknet.info</a>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer-name">//blacknet</div>
+  <div class="footer-meta">
+    <span>© <span id="year">2026</span> blacknet.info</span>
+    <span><!-- TEXT: Footer-Zeile -->//blacknet</span>
+    <a href="#top" data-wipe="//home">Nach oben ↑</a>
+  </div>
+  <a class="footer-imprint" href="impressum.html" target="_blank" rel="noopener">Impressum</a>
+</footer>
+
+<!-- Seitenübergang (Nav-Klick) -->
+<div class="wipe" id="wipe" aria-hidden="true"><span class="wipe-label" id="wipe-label"></span></div>
+
+<script src="js/main.js?v=1792774484" defer></script>
+</body>
+</html>

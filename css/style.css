@@ -1,0 +1,282 @@
+/* MuxWeb – Christoph | eigenes Design */
+:root{
+  --bg:#0a0a0a; --bg2:#121212; --fg:#f2f2ee; --muted:#8a8a85;
+  --accent:#d4ff3a;       /* Akzentfarbe hier ändern */
+  --red:#ff2a1a;          /* Bengalo-Rot: Wipe + Laufband (Schwarz darauf = 5,6:1) */
+  --line:rgba(255,255,255,.12);
+  --font:"Inter","Helvetica Neue",Arial,system-ui,sans-serif;
+  --pad:clamp(20px,4vw,64px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden;overflow-x:clip}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--accent);color:#000}
+
+/* NAV */
+.nav{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:18px var(--pad);mix-blend-mode:difference}
+.nav-logo{font-weight:900;font-size:28px;letter-spacing:-.04em}
+.nav-logo span{color:var(--accent)}
+.nav nav{display:flex;gap:clamp(12px,2.5vw,32px);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+.nav nav a{position:relative;padding:6px 0}
+.nav nav a::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:100%;background:currentColor;transform:scaleX(0);transform-origin:right;transition:transform .35s ease}
+.nav nav a:hover::after{transform:scaleX(1);transform-origin:left}
+
+/* HERO */
+.hero{position:relative;height:100vh;height:100svh;min-height:560px;overflow:hidden;background:#000;cursor:crosshair}
+#hero-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hero-fallback{position:absolute;right:0;bottom:0;height:100%;width:auto}
+.hero-text{position:absolute;left:var(--pad);right:var(--pad);bottom:clamp(36px,7vh,80px);pointer-events:none;z-index:2;text-align:center}
+.hero-kicker{font-size:13px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.hero-name{font-weight:900;text-transform:uppercase;line-height:.82;letter-spacing:-.04em;font-size:clamp(26px,6.2vw,108px);color:var(--fg);white-space:nowrap}
+.hero-tagline{margin:14px auto 0;max-width:440px;font-size:clamp(15px,1.3vw,18px);line-height:1.5;color:#cfcfca}
+.hero-name .ch{display:inline-block;transform:translateY(110%);opacity:0;transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .9s}
+.loaded .hero-name .ch{transform:none;opacity:1}
+.hero-hint{position:absolute;top:50%;right:var(--pad);transform:translateY(-50%) rotate(90deg);transform-origin:right center;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);z-index:2}
+/* Grünes Quadrat statt Punkt (Akzentfarbe). Rückgängig: .sq-Regeln löschen. */
+.sq{display:inline-block;width:.32em;height:.32em;background:var(--accent);vertical-align:middle;margin:0 .08em;flex-shrink:0}
+.hero-name .sq{width:.22em;height:.22em;margin:0 .1em;position:relative;top:-.08em}
+.hero-hint .sq{width:7px;height:7px;margin-left:4px;vertical-align:middle}
+.hint-touch{display:none}
+@media (hover:none){.hint-desktop{display:none}.hint-touch{display:inline}}
+.scroll-cue{position:absolute;left:50%;bottom:18px;width:1px;height:46px;background:var(--line);overflow:hidden;z-index:2}
+.scroll-cue span{position:absolute;left:0;top:-50%;width:1px;height:50%;background:var(--accent);animation:cue 1.8s ease-in-out infinite}
+@keyframes cue{to{top:100%}}
+
+/* MARQUEE */
+.marquee{background:var(--red);color:#000;overflow:hidden;padding:5px 0;border-block:1px solid #000}
+.marquee-track{display:flex;width:max-content;animation:marquee 26s linear infinite}
+.marquee span{font-weight:900;text-transform:none;font-size:clamp(13px,1.4vw,18px);letter-spacing:0;padding:0 18px;white-space:nowrap}
+.marquee span::after{content:"✦";margin-left:36px;font-size:.6em;vertical-align:middle}
+@keyframes marquee{to{transform:translateX(-50%)}}
+
+/* SECTIONS */
+.section{padding:clamp(80px,14vh,160px) var(--pad);border-bottom:1px solid var(--line);position:relative}
+.section-label{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.2em;margin-bottom:12px}
+.section-title{font-weight:900;text-transform:uppercase;letter-spacing:-.045em;line-height:.9;font-size:clamp(48px,9vw,140px);margin-bottom:clamp(36px,6vh,72px)}
+.about-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:clamp(28px,5vw,80px)}
+.about-lead{font-size:clamp(22px,2.6vw,38px);line-height:1.2;font-weight:600;letter-spacing:-.01em}
+.about-body p{color:#bdbdb8;line-height:1.7;margin-bottom:18px;font-size:16px}
+.tags{list-style:none;display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.tags li{border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600;transition:.25s}
+.tags li:hover{background:var(--accent);color:#000;border-color:var(--accent)}
+
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{position:relative;background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:32px 28px 72px;min-height:300px;overflow:hidden;transition:transform .4s cubic-bezier(.2,.8,.2,1),border-color .3s}
+.card::before{content:"";position:absolute;inset:0;background:var(--accent);transform:translateY(101%);transition:transform .5s cubic-bezier(.2,.8,.2,1);z-index:0}
+.card>*{position:relative;z-index:1;transition:color .3s}
+.card:hover{transform:translateY(-6px);border-color:var(--accent)}
+.card:hover::before{transform:none}
+.card:hover>*{color:#000}
+.card-num{font-size:13px;font-weight:700;color:var(--accent)}
+.card h3{font-size:clamp(24px,2.4vw,34px);font-weight:900;text-transform:uppercase;letter-spacing:-.03em;margin:22px 0 14px;line-height:1}
+.card p{color:#bdbdb8;line-height:1.6;font-size:15px}
+.card-arrow{position:absolute;right:28px;bottom:24px;font-size:28px;font-weight:700}
+
+.contact-text{font-size:clamp(18px,2vw,24px);color:#bdbdb8;max-width:640px;margin-bottom:28px}
+.contact-mail{display:inline-block;font-size:clamp(28px,6vw,88px);font-weight:900;letter-spacing:-.04em;color:var(--accent);border-bottom:4px solid var(--accent);line-height:1.05;word-break:break-all}
+.contact-mail:hover{color:var(--fg);border-color:var(--fg)}
+
+/* FOOTER */
+.footer{padding:60px var(--pad) 28px;overflow:hidden}
+.footer-name{font-weight:900;text-transform:uppercase;letter-spacing:-.06em;line-height:.8;font-size:19.5vw;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.25);white-space:nowrap;margin-left:-.04em}
+.footer-meta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:26px;font-size:13px;color:var(--muted)}
+.footer-meta a:hover{color:var(--accent)}
+
+/* REVEAL ON SCROLL */
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .9s ease,transform .9s cubic-bezier(.2,.8,.2,1)}
+.reveal.in{opacity:1;transform:none}
+
+@media (max-width:900px){
+  .about-grid{grid-template-columns:1fr}
+  .cards{grid-template-columns:1fr}
+  .card{min-height:0}
+  .nav nav a:not(.nav-about){display:none} /* Mobil: nur „About me“ */
+  .hero-hint{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .reveal{opacity:1;transform:none}
+}
+.hero::after{content:"";position:absolute;inset:auto 0 0 0;height:42%;background:linear-gradient(to top,rgba(0,0,0,.9),rgba(0,0,0,0));pointer-events:none;z-index:1}
+
+/* ÜBER MICH */
+.about-statement{font-weight:900;text-transform:uppercase;letter-spacing:-.04em;line-height:.95;font-size:clamp(34px,6.2vw,96px);max-width:1200px}
+.about-statement .role{display:inline;white-space:nowrap}
+.role-outline{color:var(--bg);-webkit-text-stroke:3px var(--fg);paint-order:stroke fill}
+.role-and{font-weight:300;text-transform:none;letter-spacing:-.02em;color:var(--muted);font-size:.55em;margin:0 .15em;vertical-align:.25em}
+.role-accent{color:var(--accent)}
+.about .about-lead{margin-top:clamp(20px,3vh,36px);max-width:760px;font-size:clamp(18px,1.8vw,26px);line-height:1.45;font-weight:400;color:#cfcfca}
+.skills{margin-top:clamp(56px,9vh,110px);border-top:1px solid var(--line);padding-top:28px}
+.skills-title{font-size:13px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:28px}
+.skill-groups{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.skill-group{background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:26px 24px 28px;transition:border-color .3s,transform .4s cubic-bezier(.2,.8,.2,1)}
+.skill-group:hover{border-color:rgba(212,255,58,.5);transform:translateY(-4px)}
+.skill-head{display:flex;align-items:center;gap:12px;font-weight:800;text-transform:uppercase;letter-spacing:-.01em;font-size:clamp(17px,1.4vw,21px);margin-bottom:20px}
+.skill-idx{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#000;font-size:13px;font-weight:900}
+.skill-list{list-style:none;display:flex;flex-wrap:wrap;gap:10px}
+.skill-list li{border:1px solid var(--line);border-radius:999px;padding:9px 16px;font-size:14px;font-weight:600;line-height:1.2;opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.8,.2,1),background .25s,color .25s,border-color .25s}
+.skill-group.in .skill-list li{opacity:1;transform:none}
+.skill-list li:hover{background:var(--accent);color:#000;border-color:var(--accent)}
+@media (max-width:900px){.skill-groups{grid-template-columns:1fr}.role-outline{-webkit-text-stroke:2px var(--fg)}}
+@media (max-width:600px){.about-statement{font-size:6.6vw;line-height:1.05}.about-statement .role{display:block}.about-statement .role-outline{display:inline}.role-and{margin:0 0 0 .2em}}
+@media (prefers-reduced-motion:reduce){.skill-list li{opacity:1;transform:none}}
+
+/* SEITENÜBERGANG (Lime-Wipe) */
+.wipe{position:fixed;inset:0;z-index:100;background:var(--red);display:grid;place-items:center;transform:translateY(101%);pointer-events:none;will-change:transform;visibility:hidden}
+.wipe-label{font-weight:900;text-transform:none;letter-spacing:-.05em;line-height:.9;color:#000;font-size:clamp(48px,11vw,180px);text-align:center;padding:0 var(--pad);white-space:nowrap}
+
+/* ---- Hero: Bengalo-Rauch als Hintergrund-Ebene ---- */
+.hero-smoke{position:absolute;inset:0;pointer-events:none;
+  transform:translate3d(calc(var(--mx,0)*-18px),calc(var(--my,0)*-10px),0)}
+.smoke{position:absolute;top:-12%;bottom:-8%;width:52%;opacity:.46;mix-blend-mode:screen;
+  -webkit-mask-image:radial-gradient(ellipse 58% 50% at 50% 52%,#000 15%,rgba(0,0,0,.5) 50%,transparent 76%);
+          mask-image:radial-gradient(ellipse 58% 50% at 50% 52%,#000 15%,rgba(0,0,0,.5) 50%,transparent 76%)}
+.smoke i{position:absolute;inset:0;background-repeat:no-repeat;background-size:cover;
+  background-image:url(../img/bengalo.jpg);
+  background-image:image-set(url(../img/bengalo.webp) type("image/webp"),url(../img/bengalo.jpg) type("image/jpeg"));
+  animation:smoke-breathe 9s ease-in-out infinite alternate}
+.smoke-l{left:-6%}
+.smoke-l i{background-position:42% 40%}
+.smoke-r{right:-6%;opacity:.5}
+.smoke-r i{background-size:auto 130%;background-position:88% 60%;transform:scaleX(-1);animation-name:smoke-breathe-r;animation-duration:11s}
+@keyframes smoke-breathe{from{transform:scale(1);filter:brightness(.9)}to{transform:scale(1.06) translateY(-1.5%);filter:brightness(1.1)}}
+@keyframes smoke-breathe-r{from{transform:scaleX(-1) scale(1);filter:brightness(1)}to{transform:scaleX(-1) scale(1.05) translateY(-1%);filter:brightness(.85)}}
+#hero-canvas{z-index:0}
+.hero-kicker{color:#ff6a4d;text-shadow:0 1px 12px rgba(0,0,0,.9),0 0 2px rgba(0,0,0,.8)}
+/* Terminal-Zeile unter dem Namen */
+.hero-term{display:inline-flex;align-items:center;gap:.6em;margin:18px auto 0;padding:.55em .9em;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"DejaVu Sans Mono","Liberation Mono",monospace;
+  font-size:clamp(14px,1.25vw,18px);line-height:1.3;color:#ecece6;white-space:nowrap;
+  background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.term-prompt{color:var(--accent);font-weight:700}
+.term-caret{display:inline-block;width:.6em;height:1.15em;margin-left:-.35em;background:var(--accent);animation:caret 1s steps(1) infinite}
+@keyframes caret{50%{opacity:0}}
+@media (max-width:800px){
+  /* Mobil: Porträt füllt die Breite -> Rauch als dezentes Licht über den Rändern (screen), Gesicht bleibt frei */
+  .hero-smoke{z-index:1}
+  .smoke{width:75%;height:55%;bottom:auto;opacity:.55;
+    -webkit-mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 10%,rgba(0,0,0,.4) 45%,transparent 72%);
+            mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 10%,rgba(0,0,0,.4) 45%,transparent 72%)}
+  .smoke-l{left:-42%;top:-12%}
+  .smoke-r{right:-45%;left:auto;top:26%;opacity:.6}
+  .smoke i{background-image:url(../img/bengalo-800.jpg);
+    background-image:image-set(url(../img/bengalo-800.webp) type("image/webp"),url(../img/bengalo-800.jpg) type("image/jpeg"));
+    background-position:8% 55%}
+  .smoke-r i{background-size:auto 130%;background-position:85% 60%}
+  .hero-term{font-size:13px;padding:.5em .75em}
+}
+@media (prefers-reduced-motion:reduce){
+  .smoke i{animation:none}
+  .term-caret{animation:none}
+  .hero-smoke{transform:none}
+}
+
+/* Nav/Überschriften im //-Stil (Kleinschreibung exakt) */
+.nav nav a.nav-about{text-transform:none;letter-spacing:.04em;font-size:14px}
+.section-title--lc{text-transform:none;letter-spacing:-.05em}
+.section-title--lc .slashes{color:var(--red);margin-right:.04em}
+
+/* ---- Nav-Hover: Buchstaben fliegen in 3D weg, zweite Reihe rollt ein ---- */
+.fly{position:relative;display:inline-block;transform-style:preserve-3d;perspective:420px;perspective-origin:50% 40%}
+.fly-row{display:inline-block;white-space:pre;transform-style:preserve-3d}
+.fly-b{position:absolute;left:0;top:0;pointer-events:none}
+.fly .c{display:inline-block;backface-visibility:hidden;transform-origin:50% 60%}
+.fly-b .c{opacity:0}
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  .fly .c{will-change:transform,opacity;
+    transition:transform .62s cubic-bezier(.22,1,.36,1) calc(var(--j)*22ms),opacity .45s cubic-bezier(.22,1,.36,1) calc(var(--j)*22ms),color .3s}
+  .fly-a .c{transform:none;opacity:1}
+  .fly-b .c{transform:translate3d(0,.95em,26px) rotateX(-95deg);opacity:0;color:var(--red)}
+  .nav-about:is(:hover,:focus-visible) .fly-a .c{
+    transition:transform .7s cubic-bezier(.3,.7,.2,1) calc(var(--i)*28ms),opacity .6s cubic-bezier(.55,0,.8,.4) calc(var(--i)*28ms),color .3s}
+  .nav-about:is(:hover,:focus-visible) .fly-b .c{
+    transition:transform .6s cubic-bezier(.22,1,.36,1) calc(130ms + var(--i)*28ms),opacity .4s ease calc(130ms + var(--i)*28ms),color .3s}
+  .nav-about:is(:hover,:focus-visible) .fly-a .c{
+    transform:translate3d(var(--x),var(--y),var(--z)) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz));opacity:0}
+  .nav-about:is(:hover,:focus-visible) .fly-b .c{transform:none;opacity:1}
+  .nav nav a.nav-about::after{background:var(--red)}
+}
+/* Touch: gleicher 3D-Flug, per JS-Klasse .is-fly (Antippen + automatisch in Intervallen) */
+@media (hover:none) and (prefers-reduced-motion:no-preference){
+  .fly .c{will-change:transform,opacity;
+    transition:transform .62s cubic-bezier(.22,1,.36,1) calc(var(--j)*22ms),opacity .45s cubic-bezier(.22,1,.36,1) calc(var(--j)*22ms),color .3s}
+  .fly-a .c{transform:none;opacity:1}
+  .fly-b .c{transform:translate3d(0,.95em,26px) rotateX(-95deg);opacity:0;color:var(--red)}
+  .nav-about.is-fly .fly-a .c{
+    transition:transform .7s cubic-bezier(.3,.7,.2,1) calc(var(--i)*28ms),opacity .6s cubic-bezier(.55,0,.8,.4) calc(var(--i)*28ms),color .3s;
+    transform:translate3d(var(--x),var(--y),var(--z)) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz));opacity:0}
+  .nav-about.is-fly .fly-b .c{
+    transition:transform .6s cubic-bezier(.22,1,.36,1) calc(130ms + var(--i)*28ms),opacity .4s ease calc(130ms + var(--i)*28ms),color .3s;
+    transform:none;opacity:1}
+}
+/* Reduzierte Bewegung: nur Farbwechsel */
+@media (prefers-reduced-motion:reduce){
+  .fly-b{display:none}
+  .nav-about .fly .c{transition:color .25s}
+  .nav-about:is(:focus-visible,:active) .fly .c{color:var(--red)}
+}
+
+/* ---- CHRISTOPH: Buchstaben kippen nacheinander nach links und stellen sich wieder auf ----
+   Abschalten: Klasse "hero-name--tilt" am <h1> in index.html entfernen (oder diesen Block löschen). */
+@media (prefers-reduced-motion:no-preference){
+  .loaded .hero-name--tilt .ch{transform-origin:0% 100%;
+    animation:fall-left 10s linear infinite;animation-delay:calc(2s + var(--k)*.22s)}
+}
+@keyframes tilt-left{
+  0%{rotate:0deg}
+  7%{rotate:-26deg}
+  13%{rotate:5deg}
+  17%{rotate:-2deg}
+  20%,100%{rotate:0deg}
+}
+
+/* ---- Gestrichelte weiße Trennlinie (ersetzt das Laufband) ---- */
+.divider-dashed{border:0;height:2px;margin:0;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.85) 0 14px,transparent 14px 26px)}
+
+/* ---- Winziger Impressum-Link im Footer ---- */
+.footer-imprint{display:block;margin-top:14px;font-size:10px;letter-spacing:.08em;color:var(--muted);opacity:.6;text-decoration:none;width:max-content}
+.footer-imprint:hover{opacity:1;color:var(--fg)}
+/* Langsam komplett nach links umfallen, kurz liegen bleiben, wieder aufstehen
+   (vorher: tilt-left 5s, Verzögerung .11s pro Buchstabe) */
+@keyframes fall-left{
+  0%{rotate:0deg;animation-timing-function:cubic-bezier(.55,0,.9,.45)}
+  13%{rotate:-90deg;animation-timing-function:ease-out}
+  15%{rotate:-82deg;animation-timing-function:ease-in}
+  17%{rotate:-90deg}
+  30%{rotate:-90deg;animation-timing-function:cubic-bezier(.3,0,.25,1)}
+  42%{rotate:5deg;animation-timing-function:ease-in-out}
+  46%{rotate:0deg}
+  100%{rotate:0deg}
+}
+
+/* ---- Handy quer (niedrige Höhe): ganzer Kopf sichtbar, Text kompakt ---- */
+@media (orientation:landscape) and (max-height:520px){
+  .hero{min-height:0;height:100vh;height:100svh}
+  .hero-text{bottom:12px}
+  .hero-kicker{font-size:10px;margin-bottom:4px}
+  .hero-name{font-size:clamp(30px,13vh,64px)}
+  .hero-term{font-size:11px;margin-top:8px;padding:.4em .7em}
+}
+/* Handy quer: Bengalos wie am Desktop links und rechts neben dem Kopf (überschreibt die Hochformat-Regeln) */
+@media (orientation:landscape) and (max-height:520px){
+  .hero-smoke{z-index:auto}
+  .smoke{width:46%;height:auto;top:-10%;bottom:-6%;opacity:.5;
+    -webkit-mask-image:radial-gradient(ellipse 58% 50% at 50% 52%,#000 15%,rgba(0,0,0,.5) 50%,transparent 76%);
+            mask-image:radial-gradient(ellipse 58% 50% at 50% 52%,#000 15%,rgba(0,0,0,.5) 50%,transparent 76%)}
+  .smoke-l{left:-4%;top:-10%}
+  .smoke-r{right:-4%;left:auto;top:-10%;opacity:.55}
+  .smoke-l i{background-position:42% 40%}
+  .smoke-r i{background-size:auto 130%;background-position:88% 60%}
+}
+
+/* Handy hoch: Porträt etwas kleiner, Bengalos links und rechts neben dem Kopf sichtbar */
+@media (max-width:800px) and (orientation:portrait){
+  .smoke{width:62%;height:72%;top:2%;opacity:.7}
+  .smoke-l{left:-26%;top:-2%}
+  .smoke-r{right:-28%;left:auto;top:12%;opacity:.7}
+  .smoke-l i{background-position:42% 40%}
+  .smoke-r i{background-size:auto 120%;background-position:88% 55%}
+}
