@@ -19,12 +19,10 @@ The evidence desk accepts a local image and never uploads it.
 
 ## Assets
 
-`assets/sheep-normal.png` and `assets/sheep-xray.png` are the same canvas and the same alpha mask, cut from `source/sheep-side.jpg`. Rebuild them with:
+The page ends at the down arrow under the hero. `assets/sheep-normal.png` and `assets/sheep-xray.png` share one alpha mask, cut from `source/sheep-front.jpg`, which shows the whole animal. The side photo crops the rump at the frame, so it is not the hero. Rebuild with:
 
 ```bash
-python3 tools/prepare_sheep.py source/sheep-side.jpg
+python3 tools/prepare_sheep.py source/sheep-front.jpg
 ```
-
-The script removes the grass and fence and paints the mechanical scan inside that exact silhouette.
 
 The headline face is IBM Plex Mono Medium, the font the original page served under the name `custom_186012`. It is included under the SIL Open Font License; see `assets/fonts/OFL.txt`.

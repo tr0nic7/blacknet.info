@@ -90,7 +90,7 @@ def defringe(arr: np.ndarray) -> np.ndarray:
         rgb[fringe] = filled[fringe]
         weight = np.maximum(weight, ((alpha > 0) & (blur_w > 0)).astype(np.float32))
     # Drop the outermost faint pixels. Ears stay, the white rim goes.
-    contracted = cv2.erode(alpha, np.ones((3, 3), np.uint8), iterations=1)
+    contracted = cv2.erode(alpha, np.ones((3, 3), np.uint8), iterations=2)
     soft = cv2.GaussianBlur(contracted, (0, 0), 0.7)
     tightened = np.where(alpha > 235, alpha, np.minimum(alpha, soft))
     tightened[tightened < 28] = 0
@@ -195,148 +195,178 @@ def vertical_runs(column: np.ndarray) -> list[tuple[int, int]]:
 
 
 def mechanical_layer(normal: Image.Image) -> Image.Image:
-    """Stylized spy-scan. Bones and hardware are drawn inside the sheep, not a color filter."""
+    """Detailed radiographic sheep. Bones are drawn to this pose and clipped to its alpha."""
     arr = np.array(normal)
     rgb = arr[:, :, :3].astype(np.float32)
     alpha = arr[:, :, 3]
-    mask = alpha > 24
+    mask = alpha > 28
     if not np.any(mask):
         raise SystemExit("framed sheep has no pixels")
 
     gray = rgb[:, :, 0] * 0.2126 + rgb[:, :, 1] * 0.7152 + rgb[:, :, 2] * 0.0722
-    gray = cv2.GaussianBlur(gray, (0, 0), 1.1)
+    gray = cv2.GaussianBlur(gray, (0, 0), 0.8)
     dist = cv2.distanceTransform(mask.astype(np.uint8), cv2.DIST_L2, 5)
     dist_n = dist / max(1.0, float(dist.max()))
-    grain = gray - cv2.GaussianBlur(gray, (0, 0), 2.2)
-    # Keep this sheep's fleece in the plate, the way the pigeon scan still shows feathers.
-    tone = np.clip(0.16 + (gray / 255.0) * 0.70 * (1.05 - dist_n * 0.28) + grain / 255.0 * 0.35, 0.05, 1.0)
+    grain = gray - cv2.GaussianBlur(gray, (0, 0), 2.4)
+    tone = np.clip(0.10 + (gray / 255.0) * 0.62 * (1.08 - dist_n * 0.35) + grain / 255.0 * 0.28, 0.04, 1)
     tissue = np.zeros_like(rgb)
-    tissue[:, :, 0] = 16 + tone * 72
-    tissue[:, :, 1] = 28 + tone * 96
-    tissue[:, :, 2] = 46 + tone * 118
+    tissue[:, :, 0] = 12 + tone * 58
+    tissue[:, :, 1] = 22 + tone * 78
+    tissue[:, :, 2] = 40 + tone * 96
+    rng = np.random.default_rng(11)
+    tissue += rng.normal(0, 3.2, tissue.shape) * (0.35 + dist_n[:, :, None] * 0.4)
     tissue = np.clip(tissue, 0, 255)
 
     h, w = mask.shape
-    body = np.zeros_like(mask)
-    legs = np.zeros_like(mask)
-    body_span = {}
-    for x in range(w):
-        runs = vertical_runs(mask[:, x])
-        if not runs:
+    soft = np.zeros((h, w), np.uint8)
+    hard = np.zeros((h, w), np.uint8)
+
+    def ok(pt):
+        x, y = int(pt[0]), int(pt[1])
+        return 0 <= x < w and 0 <= y < h and mask[y, x]
+
+    def snap(pt, reach=48):
+        if ok(pt):
+            return (int(pt[0]), int(pt[1]))
+        x, y = int(pt[0]), int(pt[1])
+        for rad in range(1, reach):
+            for dy in range(-rad, rad + 1, 2):
+                for dx in range(-rad, rad + 1, 2):
+                    q = (x + dx, y + dy)
+                    if ok(q):
+                        return q
+        return None
+
+    def curve(p0, p1, p2, n=22):
+        pts = []
+        for t in np.linspace(0, 1, n):
+            x = (1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * p1[0] + t ** 2 * p2[0]
+            y = (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * p1[1] + t ** 2 * p2[1]
+            pts.append((int(round(x)), int(round(y))))
+        return pts
+
+    def paint(pts, thick, layer):
+        kept = [p for p in pts if ok(p)]
+        if len(kept) < 2:
+            return
+        cv2.polylines(layer, [np.array(kept, np.int32)], False, 255, thick, cv2.LINE_AA)
+
+    def joint(pt, rad):
+        p = snap(pt)
+        if p is None:
+            return
+        cv2.circle(soft, p, rad + 4, 255, -1, cv2.LINE_AA)
+        cv2.circle(hard, p, max(2, rad - 1), 255, 2, cv2.LINE_AA)
+        cv2.circle(hard, p, max(1, rad // 3), 255, -1, cv2.LINE_AA)
+
+    # Spine of this front-three-quarter pose: neck behind the skull,
+    # back under the topline, sacrum toward the rounded rump.
+    spine_raw = [
+        (600, 860), (660, 740), (740, 620), (840, 530),
+        (960, 490), (1080, 520), (1160, 600), (1210, 700),
+    ]
+    spine = [p for p in (snap(q) for q in spine_raw) if p]
+    paint(spine, 16, soft)
+    paint(spine, 7, hard)
+    for i, p in enumerate(spine):
+        cv2.ellipse(soft, p, (16, 11), -18 + i * 4, 0, 360, 255, -1, cv2.LINE_AA)
+        cv2.ellipse(hard, p, (16, 11), -18 + i * 4, 0, 360, 255, 2, cv2.LINE_AA)
+        # Dorsal process.
+        ang = np.deg2rad(-70 + i * 6)
+        tip = (int(p[0] + np.cos(ang) * 18), int(p[1] + np.sin(ang) * 18))
+        paint([p, tip], 3, hard)
+
+    # Curved ribs from the thoracic vertebrae down into the chest.
+    rib_roots = spine[1:8]
+    for i, root in enumerate(rib_roots):
+        drop = 120 + i * 36
+        bow = 90 + i * 12
+        end = snap((root[0] - 40 - i * 18, root[1] + drop))
+        if end is None:
             continue
-        longest = max(runs, key=lambda run: run[1] - run[0])
-        body[longest[0] : longest[1] + 1, x] = True
-        body_span[x] = longest
-        for run in runs:
-            if run != longest and run[0] > longest[0]:
-                legs[run[0] : run[1] + 1, x] = True
+        ctrl = (root[0] - bow, root[1] + drop * 0.45)
+        rib = curve(root, ctrl, end)
+        paint(rib, 11, soft)
+        paint(rib, 4, hard)
+        # A shorter mate just beside it, so the cage reads as pairs.
+        mate_end = snap((end[0] + 22, end[1] - 10))
+        if mate_end:
+            mate = curve((root[0] + 16, root[1] + 8), (ctrl[0] + 24, ctrl[1]), mate_end)
+            paint(mate, 3, hard)
 
-    bone = np.zeros((h, w), np.uint8)
-    ys, xs = np.where(mask)
-    x0, x1 = int(xs.min()), int(xs.max())
-    bw = x1 - x0 + 1
+    # Sternum linking the lower rib ends, slightly inside the chest.
+    sternum = [snap((640 + i * 18, 980 + i * 22)) for i in range(6)]
+    paint([p for p in sternum if p], 5, hard)
 
-    # Spine sits inside the torso, under the topline, from the neck to the rump.
-    torso_xs = [x for x, (top, bot) in body_span.items() if bot - top > bw * 0.18 and x > x0 + bw * 0.22]
-    spine = []
-    for x in torso_xs:
-        top, bot = body_span[x]
-        sy = int(top + (bot - top) * 0.18)
-        if body[sy, x]:
-            spine.append((x, sy))
-    if len(spine) > 2:
-        cv2.polylines(bone, [np.array(spine, np.int32)], False, 255, 5, cv2.LINE_AA)
-
-    # A handful of solid ribs through the chest, not a dotted screen.
-    chest_xs = [x for x in torso_xs if x0 + int(bw * 0.30) < x < x0 + int(bw * 0.60)]
-    if chest_xs:
-        picks = np.linspace(0, len(chest_xs) - 1, 7).astype(int)
-        sternum = []
-        for n, idx in enumerate(picks):
-            x = int(chest_xs[idx])
-            top, bot = body_span[x]
-            sy = int(top + (bot - top) * 0.18)
-            end = min(sy + 120, bot - 6)
-            pts = []
-            for t in np.linspace(0, 1, 24):
-                yy = int(sy + (end - sy) * t)
-                xx = int(round(x + np.sin(t * np.pi) * (8 + n % 3)))
-                if 0 <= yy < h and 0 <= xx < w and body[yy, xx]:
-                    pts.append((xx, yy))
-            if len(pts) > 3:
-                cv2.polylines(bone, [np.array(pts, np.int32)], False, 255, 3, cv2.LINE_AA)
-                sternum.append(pts[-1])
-        if len(sternum) > 2:
-            cv2.polylines(bone, [np.array(sternum, np.int32)], False, 255, 3, cv2.LINE_AA)
-
-    # Leg bones follow each limb.
-    leg_count, leg_labels = cv2.connectedComponents((legs.astype(np.uint8) * 255), connectivity=8)
-    cross = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
-    for label in range(1, leg_count):
-        limb = np.where(leg_labels == label, 255, 0).astype(np.uint8)
-        if int(cv2.countNonZero(limb)) < 80:
+    # Shoulder blades: long flat bones over each forelimb, not geometric kites.
+    for center, angle in (((640, 1160), -28), ((900, 1120), 18)):
+        c = snap(center, 50)
+        if c is None:
             continue
-        work = limb.copy()
-        skel = np.zeros_like(work)
-        while cv2.countNonZero(work):
-            eroded = cv2.erode(work, cross)
-            skel = cv2.bitwise_or(skel, cv2.subtract(work, cv2.dilate(eroded, cross)))
-            work = eroded
-        bone = cv2.bitwise_or(bone, cv2.dilate(skel, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))))
+        cv2.ellipse(soft, c, (28, 70), angle, 0, 360, 255, -1, cv2.LINE_AA)
+        cv2.ellipse(hard, c, (28, 70), angle, 0, 360, 255, 3, cv2.LINE_AA)
+        cv2.ellipse(hard, c, (10, 40), angle, 0, 360, 255, 2, cv2.LINE_AA)
 
-    bone_f = bone.astype(np.float32) / 255.0
-    glow = cv2.GaussianBlur(bone_f, (0, 0), 2.6)
-    core = bone_f
-    tissue[:, :, 0] = np.clip(tissue[:, :, 0] + glow * 90 + core * 170, 0, 255)
-    tissue[:, :, 1] = np.clip(tissue[:, :, 1] + glow * 120 + core * 200, 0, 255)
-    tissue[:, :, 2] = np.clip(tissue[:, :, 2] + glow * 140 + core * 220, 0, 255)
+    # Pelvis in the rounded rump: sacral bar plus two ilium wings.
+    sacrum = [p for p in (snap(q) for q in ((1040, 560), (1140, 620), (1180, 740))) if p]
+    paint(sacrum, 10, soft)
+    paint(sacrum, 4, hard)
+    for wing in (
+        curve((1080, 600), (1220, 540), (1230, 700)),
+        curve((1100, 680), (1220, 760), (1140, 860)),
+    ):
+        paint(wing, 12, soft)
+        paint(wing, 4, hard)
+    joint((1120, 760), 12)
+
+    # Foreleg bones and joints, traced to the hooves that are actually in frame.
+    for chain, rads in (
+        ([(620, 1240), (600, 1400), (590, 1540), (575, 1660), (580, 1760)], [14, 11, 9, 8, 10]),
+        ([(860, 1200), (840, 1380), (820, 1540), (800, 1660), (790, 1740)], [14, 11, 9, 8, 10]),
+    ):
+        pts = [snap(q, 55) for q in chain]
+        pts = [p for p in pts if p]
+        for a, b, ra, rb in zip(pts, pts[1:], rads, rads[1:]):
+            paint([a, b], max(ra, rb) + 6, soft)
+            paint([a, b], max(6, (ra + rb) // 2), hard)
+        for p, r in zip(pts, rads):
+            joint(p, r)
+
+    # Skull, jaw, orbits and nasal opening on the face.
+    skull = snap((505, 880))
+    if skull:
+        cv2.ellipse(soft, skull, (72, 58), -8, 0, 360, 255, -1, cv2.LINE_AA)
+        cv2.ellipse(hard, skull, (72, 58), -8, 0, 360, 255, 3, cv2.LINE_AA)
+        # Cranial sutures, not a face.
+        cv2.line(hard, (skull[0] - 10, skull[1] - 40), (skull[0] + 8, skull[1] + 20), 255, 2, cv2.LINE_AA)
+        for orbit, rad in (((468, 905), 15), ((548, 895), 13)):
+            o = snap(orbit, 28)
+            if o:
+                cv2.circle(soft, o, rad, 180, -1, cv2.LINE_AA)
+                cv2.circle(hard, o, rad, 255, 3, cv2.LINE_AA)
+                cv2.circle(hard, o, 4, 255, -1, cv2.LINE_AA)
+        nose = snap((508, 990))
+        if nose:
+            cv2.ellipse(hard, nose, (10, 18), 8, 0, 360, 255, 2, cv2.LINE_AA)
+        jaw = curve((440, 960), (500, 1045), (590, 990))
+        paint(jaw, 5, hard)
+        paint(curve((455, 1005), (510, 1035), (565, 1000)), 2, hard)
+
+    # Volume: soft bone bodies under crisp cortices.
+    shade = cv2.GaussianBlur(soft, (0, 0), 3.5).astype(np.float32) / 255.0
+    cortex = hard.astype(np.float32) / 255.0
+    cortex = cv2.GaussianBlur(cortex, (0, 0), 0.6)
+    tissue[:, :, 0] = np.clip(tissue[:, :, 0] + shade * 70 + cortex * 150, 0, 255)
+    tissue[:, :, 1] = np.clip(tissue[:, :, 1] + shade * 96 + cortex * 185, 0, 255)
+    tissue[:, :, 2] = np.clip(tissue[:, :, 2] + shade * 120 + cortex * 210, 0, 255)
 
     plate = Image.fromarray(tissue.astype(np.uint8), "RGB").convert("RGBA")
+    # One surveillance camera in the chest, the original scan's hardware note.
     overlay = Image.new("RGBA", plate.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
-    ink = (236, 246, 255, 230)
-
-    # Skull in the head, inset so it reads as bone rather than an outline of the face.
-    head_right = x0 + int(bw * 0.30)
-    head = mask[:, x0:head_right]
-    hys, hxs = np.where(head)
-    eye = None
-    if len(hxs):
-        hx0, hx1 = x0 + int(hxs.min()), x0 + int(hxs.max())
-        hy0, hy1 = int(hys.min()), int(hys.max())
-        draw.ellipse(
-            [hx0 + 18, hy0 + 10, hx1 - 8, hy0 + int((hy1 - hy0) * 0.58)],
-            outline=ink,
-            width=3,
-        )
-        jaw_y = hy0 + int((hy1 - hy0) * 0.72)
-        draw.arc([hx0 + 10, hy0 + 20, hx1 - 4, jaw_y + 30], 20, 200, fill=ink, width=2)
-        # The real eye is the darkest compact spot in the upper face.
-        # Place the sensor on the eye, inward from the floppy ear.
-        draw_camera(
-            draw,
-            hx0 + int((hx1 - hx0) * 0.64),
-            hy0 + int((hy1 - hy0) * 0.40),
-            0.42,
-        )
-
-    if spine:
-        chest_pts = [p for p in spine if x0 + bw * 0.28 < p[0] < x0 + bw * 0.55]
-        if chest_pts:
-            cx, cy = chest_pts[len(chest_pts) // 2]
-            cy = int(cy + 36)
-            draw_camera(draw, cx, cy, 1.35)
-            draw.line([(cx, cy + 34), (cx + 8, cy + 78)], fill=ink, width=2)
-            draw.rounded_rectangle([cx - 16, cy + 76, cx + 22, cy + 104], radius=3, outline=(170, 220, 190, 220), width=2)
-            for row in range(3):
-                for col in range(4):
-                    px = cx - 10 + col * 8
-                    py = cy + 82 + row * 6
-                    draw.point((px, py), fill=(150, 230, 170, 230))
-            draw.line([(cx + 4, cy + 104), (cx + 4, cy + 132)], fill=ink, width=2)
-            draw.rounded_rectangle([cx - 8, cy + 128, cx + 16, cy + 152], radius=2, outline=ink, width=2)
-            draw.arc([cx - 6, cy + 116, cx + 14, cy + 136], 200, 340, fill=ink, width=2)
-
+    cam = snap((760, 860))
+    if cam:
+        draw_camera(draw, cam[0], cam[1], 1.05)
     composed = plate.copy()
     composed.alpha_composite(overlay)
     out = np.array(composed)
@@ -348,7 +378,8 @@ def mechanical_layer(normal: Image.Image) -> Image.Image:
 def main() -> None:
     photo = Path(sys.argv[1]) if len(sys.argv) > 1 else find_photo()
     print("source", photo, photo.stat().st_size)
-    source_copy = ROOT / "source" / "sheep-side.jpg"
+    source_name = "sheep-front.jpg" if "front" in photo.name.lower() else "sheep-side.jpg"
+    source_copy = ROOT / "source" / source_name
     if photo.resolve() != source_copy.resolve():
         source_copy.write_bytes(photo.read_bytes())
     cut = isolate(photo)

@@ -16,9 +16,9 @@
     desktop.hidden = phone;
     mobile.hidden = !phone;
     if (phone) {
-      fit(mobile, mobileStage, 320, 1862);
+      fit(mobile, mobileStage, 320, 572);
     } else {
-      fit(desktop, desktopStage, 1024, 1533);
+      fit(desktop, desktopStage, 1024, 568);
     }
   }
 

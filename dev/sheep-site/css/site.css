@@ -52,7 +52,8 @@ body {
   top: 0;
   left: 0;
   transform-origin: 0 0;
-  background: var(--paper);
+  overflow: hidden;
+  background: #000;
 }
 
 .stage * {
@@ -92,6 +93,12 @@ body {
   font-size: 80px;
   line-height: 82px;
   font-weight: 700;
+}
+
+h1.display {
+  font-size: 52px;
+  line-height: 58px;
+  letter-spacing: -0.04em;
 }
 
 .unit {
@@ -258,10 +265,11 @@ iframe.embed {
 
 .mobile-title {
   text-align: center;
-  font-size: 29px;
-  line-height: 31px;
+  font-size: 26px;
+  line-height: 30px;
   font-weight: 700;
   white-space: pre;
+  letter-spacing: -0.03em;
 }
 
 .m-press {
