@@ -1,8 +1,8 @@
-# Wollwölklein vom Berg
+# Wollwölklein aus Langula
 
 Static hero. HTML, CSS, JavaScript, and local files. No Node runtime and no remote requests.
 
-Image, stylesheet, script, and font URLs carry a version query so a warm browser does not reuse a seven-day cache of an older file. The pictures are versioned: `sheep-normal.png?v=116eeb948f4f6912` and `sheep-xray.png?v=5595e7aa148297d4`. The headline uses Instrument Sans. On a phone the sheep uses the column width, and the lens magnifies the plate about 3.85 times around the finger while the circle itself sits above it. The carrot is painted only on the x-ray, in the belly.
+Image, stylesheet, script, and font URLs carry a version query so a warm browser does not reuse a seven-day cache of an older file. The pictures are versioned: `sheep-normal.png?v=116eeb948f4f6912` and `sheep-xray.png?v=56f3437d24e1eae2`. The headline uses Instrument Sans. On a phone the sheep uses the column width, and the lens magnifies the plate about 3.85 times around the finger while the circle itself sits above it. The carrot is painted only on the x-ray, in the belly.
 
 Open `index.html` through any static server. For nginx, point a location at this directory.
 

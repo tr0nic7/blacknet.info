@@ -150,70 +150,36 @@ def tube(density, pts, r0, r1, gain=1.0):
 
 
 def paint_carrot(rgb: np.ndarray, mask: np.ndarray, dist: np.ndarray) -> None:
-    """Orange root with ridges and a green crown, inside the abdomen only."""
+    """Photograph of a real carrot, placed in the abdomen and clipped to the wool."""
+    src = np.array(Image.open(ROOT / "source" / "carrot.jpg").convert("RGB"))
+    peak = src.max(axis=2).astype(np.float32)
+    alpha = np.clip((peak - 12.0) / 22.0, 0, 1)
+    alpha[peak < 16] = 0
+    alpha = cv2.GaussianBlur(alpha, (0, 0), 0.45)
+    cut = Image.fromarray(np.dstack([src, (alpha * 255).astype(np.uint8)]), "RGBA")
+    target_h = 268
+    cut = cut.resize((max(1, int(cut.width * target_h / cut.height)), target_h), Image.Resampling.LANCZOS)
+    cut = cut.rotate(-16, expand=True, resample=Image.Resampling.BICUBIC)
+    sprite = np.array(cut).astype(np.float32)
+    sh, sw = sprite.shape[:2]
+    cx, cy = 910, 1105
+    x0, y0 = int(cx - sw / 2), int(cy - sh / 2)
+    x1, y1 = x0 + sw, y0 + sh
     h, w = mask.shape
-    crown = np.array([1016.0, 1088.0], np.float32)
-    tip = np.array([930.0, 1212.0], np.float32)
-    axis = tip - crown
-    length = float(np.hypot(axis[0], axis[1]))
-    direction = axis / length
-    side_axis = np.array([-direction[1], direction[0]], np.float32)
-    pad = 90
-    x0 = max(0, int(min(crown[0], tip[0]) - pad))
-    x1 = min(w, int(max(crown[0], tip[0]) + pad))
-    y0 = max(0, int(min(crown[1], tip[1]) - pad))
-    y1 = min(h, int(max(crown[1], tip[1]) + pad))
+    sx0, sy0 = max(0, -x0), max(0, -y0)
+    sx1, sy1 = sw - max(0, x1 - w), sh - max(0, y1 - h)
+    x0, y0 = max(0, x0), max(0, y0)
+    x1, y1 = min(w, x1), min(h, y1)
+    patch = sprite[sy0:sy1, sx0:sx1]
+    # A softer belly behind the root, so it sits in the stomach.
     yy, xx = np.mgrid[y0:y1, x0:x1]
-    relx = xx - crown[0]
-    rely = yy - crown[1]
-    along = (relx * direction[0] + rely * direction[1]) / length
-    side = relx * side_axis[0] + rely * side_axis[1]
-    radius = 34.0 * (1.0 - along) + 6.0 * along
-    unit = np.abs(side) / np.maximum(radius, 1.0)
-    body = (along >= -0.02) & (along <= 1.03) & (unit <= 1.05)
-    core = np.clip(1.0 - unit, 0, 1) ** 0.55
-    rings = (np.sin(along * np.pi * 8.0) > 0.15) & (along > 0.06) & (along < 0.9) & (unit < 0.92)
-    # Stomach cavity: a soft darker oval so the root sits in the belly.
-    cavity = np.exp(-((along - 0.45) ** 2) / 0.55 - (side ** 2) / (78.0 ** 2))
-    slab = rgb[y0:y1, x0:x1].astype(np.float32)
-    slab *= 1.0 - cavity[..., None] * 0.28
-    orange = np.array([236.0, 118.0, 42.0], np.float32)
-    highlight = np.array([255.0, 186.0, 96.0], np.float32)
-    ridge = np.array([168.0, 64.0, 18.0], np.float32)
-    color = highlight * (0.35 + 0.65 * core[..., None]) 
-    color = color * (1.0 - 0.55 * rings[..., None]) + ridge * (0.55 * rings[..., None])
-    color = color * 0.82 + orange * 0.18
-    edge = np.clip((1.05 - unit) / 0.22, 0, 1)
-    paint = core * 0.55 + edge * 0.45
-    paint = np.where(body, paint, 0.0)
-    slab = slab * (1.0 - paint[..., None]) + color * paint[..., None]
-    # Leafy crown, fanning up from the thick end.
-    leaf_color = np.zeros(yy.shape + (3,), np.float32)
-    winner = np.zeros(yy.shape, np.float32)
-    for angle, reach, width, shade in (
-        (-58, 58, 10, (78, 168, 62)),
-        (-28, 68, 11, (96, 186, 70)),
-        (0, 62, 10, (64, 148, 54)),
-        (26, 64, 10, (110, 176, 64)),
-        (52, 52, 9, (72, 154, 58)),
-    ):
-        ang = np.deg2rad(angle)
-        leaf_dir = np.array([np.sin(ang), -np.cos(ang)], np.float32)
-        leaf_side = np.array([-leaf_dir[1], leaf_dir[0]], np.float32)
-        lx = relx * leaf_dir[0] + rely * leaf_dir[1]
-        ly = relx * leaf_side[0] + rely * leaf_side[1]
-        t = lx / reach
-        half = width * (1.0 - 0.75 * np.clip(t, 0, 1))
-        on = (t >= -0.02) & (t <= 1.0) & (np.abs(ly) <= half)
-        amt = np.where(on, np.clip(1.0 - np.abs(ly) / np.maximum(half, 1), 0, 1), 0).astype(np.float32)
-        take = amt > winner
-        winner = np.maximum(winner, amt)
-        leaf_color = np.where(take[..., None], np.array(shade, np.float32), leaf_color)
-    leaf_amt = winner * 0.92
-    slab = slab * (1.0 - leaf_amt[..., None]) + leaf_color * leaf_amt[..., None]
-    # Keep the carrot inside the wool, and softer near the silhouette edge.
-    inside = (mask[y0:y1, x0:x1]) & (dist[y0:y1, x0:x1] > 18)
-    rgb[y0:y1, x0:x1] = np.where(inside[..., None], np.clip(slab, 0, 255), rgb[y0:y1, x0:x1])
+    cavity = np.exp(-(((xx - cx) / 92.0) ** 2 + ((yy - (cy + 18)) / 78.0) ** 2))
+    under = rgb[y0:y1, x0:x1].astype(np.float32)
+    under *= 1.0 - cavity[..., None] * 0.22
+    cover = patch[:, :, 3] / 255.0
+    cover *= np.clip(dist[y0:y1, x0:x1] / 16.0, 0, 1)
+    cover *= mask[y0:y1, x0:x1]
+    rgb[y0:y1, x0:x1] = np.clip(under * (1.0 - cover[..., None]) + patch[:, :, :3] * cover[..., None], 0, 255)
 
 
 def main() -> None:
