@@ -77,6 +77,29 @@ def keep_largest(alpha: np.ndarray) -> np.ndarray:
     return fill_holes(cleaned)
 
 
+def defringe(arr: np.ndarray) -> np.ndarray:
+    """Pull the pale matte halo back into the wool color and tighten the edge."""
+    alpha = arr[:, :, 3]
+    rgb = arr[:, :, :3].astype(np.float32)
+    weight = (alpha > 210).astype(np.float32)
+    for _ in range(6):
+        blur_rgb = cv2.blur(rgb * weight[:, :, None], (7, 7))
+        blur_w = cv2.blur(weight, (7, 7))
+        filled = blur_rgb / np.maximum(blur_w[:, :, None], 1e-3)
+        fringe = (alpha > 0) & (alpha < 230)
+        rgb[fringe] = filled[fringe]
+        weight = np.maximum(weight, ((alpha > 0) & (blur_w > 0)).astype(np.float32))
+    # Drop the outermost faint pixels. Ears stay, the white rim goes.
+    contracted = cv2.erode(alpha, np.ones((3, 3), np.uint8), iterations=1)
+    soft = cv2.GaussianBlur(contracted, (0, 0), 0.7)
+    tightened = np.where(alpha > 235, alpha, np.minimum(alpha, soft))
+    tightened[tightened < 28] = 0
+    out = arr.copy()
+    out[:, :, :3] = np.clip(rgb, 0, 255).astype(np.uint8)
+    out[:, :, 3] = tightened.astype(np.uint8)
+    return out
+
+
 def isolate(path: Path) -> Image.Image:
     from rembg import new_session, remove
 
@@ -100,9 +123,7 @@ def isolate(path: Path) -> Image.Image:
     rgb[:, :, 1] -= spill[:, :, 0] * 28
     rgb = np.clip(rgb, 0, 255)
     arr[:, :, :3] = rgb.astype(np.uint8)
-    # Soften only the outermost matte so wool stays, halos go.
-    soft = cv2.GaussianBlur(arr[:, :, 3], (0, 0), 0.6)
-    arr[:, :, 3] = np.maximum(np.where(arr[:, :, 3] > 240, arr[:, :, 3], soft), 0)
+    arr = defringe(arr)
     return Image.fromarray(arr, "RGBA")
 
 
@@ -159,110 +180,162 @@ def draw_camera(draw: ImageDraw.ImageDraw, cx: int, cy: int, s: float) -> None:
     )
 
 
+def vertical_runs(column: np.ndarray) -> list[tuple[int, int]]:
+    runs = []
+    start = None
+    for i, on in enumerate(column):
+        if on and start is None:
+            start = i
+        elif not on and start is not None:
+            runs.append((start, i - 1))
+            start = None
+    if start is not None:
+        runs.append((start, len(column) - 1))
+    return runs
+
+
 def mechanical_layer(normal: Image.Image) -> Image.Image:
+    """Stylized spy-scan. Bones and hardware are drawn inside the sheep, not a color filter."""
     arr = np.array(normal)
     rgb = arr[:, :, :3].astype(np.float32)
     alpha = arr[:, :, 3]
-    mask = alpha > 20
+    mask = alpha > 24
     if not np.any(mask):
         raise SystemExit("framed sheep has no pixels")
 
     gray = rgb[:, :, 0] * 0.2126 + rgb[:, :, 1] * 0.7152 + rgb[:, :, 2] * 0.0722
-    gray = cv2.GaussianBlur(gray, (0, 0), 1.2)
+    gray = cv2.GaussianBlur(gray, (0, 0), 1.1)
     dist = cv2.distanceTransform(mask.astype(np.uint8), cv2.DIST_L2, 5)
     dist_n = dist / max(1.0, float(dist.max()))
-    # Thinner wool reads brighter, the way an X-ray plate does.
-    tone = np.clip(0.55 + gray / 255.0 * 0.85 - dist_n * 0.55, 0.08, 1.0)
+    grain = gray - cv2.GaussianBlur(gray, (0, 0), 2.2)
+    # Keep this sheep's fleece in the plate, the way the pigeon scan still shows feathers.
+    tone = np.clip(0.16 + (gray / 255.0) * 0.70 * (1.05 - dist_n * 0.28) + grain / 255.0 * 0.35, 0.05, 1.0)
     tissue = np.zeros_like(rgb)
-    tissue[:, :, 0] = 18 + tone * 78
-    tissue[:, :, 1] = 42 + tone * 118
-    tissue[:, :, 2] = 78 + tone * 150
-    # Keep a little of the real wool grain so the scan is this animal.
-    grain = (gray - cv2.GaussianBlur(gray, (0, 0), 3.5)) * 0.35
-    tissue += grain[:, :, None]
+    tissue[:, :, 0] = 16 + tone * 72
+    tissue[:, :, 1] = 28 + tone * 96
+    tissue[:, :, 2] = 46 + tone * 118
     tissue = np.clip(tissue, 0, 255)
 
-    skel = np.zeros(mask.shape, np.uint8)
-    work = mask.astype(np.uint8) * 255
-    element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
-    while cv2.countNonZero(work):
-        eroded = cv2.erode(work, element)
-        skel = cv2.bitwise_or(skel, cv2.subtract(work, cv2.dilate(eroded, element)))
-        work = eroded
-    bone = cv2.dilate(skel, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))
-    glow = cv2.GaussianBlur(bone, (0, 0), 2.2).astype(np.float32) / 255.0
-    core = bone.astype(np.float32) / 255.0
-    tissue[:, :, 0] = np.clip(tissue[:, :, 0] + glow * 80 + core * 150, 0, 255)
-    tissue[:, :, 1] = np.clip(tissue[:, :, 1] + glow * 110 + core * 180, 0, 255)
-    tissue[:, :, 2] = np.clip(tissue[:, :, 2] + glow * 130 + core * 200, 0, 255)
+    h, w = mask.shape
+    body = np.zeros_like(mask)
+    legs = np.zeros_like(mask)
+    body_span = {}
+    for x in range(w):
+        runs = vertical_runs(mask[:, x])
+        if not runs:
+            continue
+        longest = max(runs, key=lambda run: run[1] - run[0])
+        body[longest[0] : longest[1] + 1, x] = True
+        body_span[x] = longest
+        for run in runs:
+            if run != longest and run[0] > longest[0]:
+                legs[run[0] : run[1] + 1, x] = True
+
+    bone = np.zeros((h, w), np.uint8)
+    ys, xs = np.where(mask)
+    x0, x1 = int(xs.min()), int(xs.max())
+    bw = x1 - x0 + 1
+
+    # Spine sits inside the torso, under the topline, from the neck to the rump.
+    torso_xs = [x for x, (top, bot) in body_span.items() if bot - top > bw * 0.18 and x > x0 + bw * 0.22]
+    spine = []
+    for x in torso_xs:
+        top, bot = body_span[x]
+        sy = int(top + (bot - top) * 0.18)
+        if body[sy, x]:
+            spine.append((x, sy))
+    if len(spine) > 2:
+        cv2.polylines(bone, [np.array(spine, np.int32)], False, 255, 5, cv2.LINE_AA)
+
+    # A handful of solid ribs through the chest, not a dotted screen.
+    chest_xs = [x for x in torso_xs if x0 + int(bw * 0.30) < x < x0 + int(bw * 0.60)]
+    if chest_xs:
+        picks = np.linspace(0, len(chest_xs) - 1, 7).astype(int)
+        sternum = []
+        for n, idx in enumerate(picks):
+            x = int(chest_xs[idx])
+            top, bot = body_span[x]
+            sy = int(top + (bot - top) * 0.18)
+            end = min(sy + 120, bot - 6)
+            pts = []
+            for t in np.linspace(0, 1, 24):
+                yy = int(sy + (end - sy) * t)
+                xx = int(round(x + np.sin(t * np.pi) * (8 + n % 3)))
+                if 0 <= yy < h and 0 <= xx < w and body[yy, xx]:
+                    pts.append((xx, yy))
+            if len(pts) > 3:
+                cv2.polylines(bone, [np.array(pts, np.int32)], False, 255, 3, cv2.LINE_AA)
+                sternum.append(pts[-1])
+        if len(sternum) > 2:
+            cv2.polylines(bone, [np.array(sternum, np.int32)], False, 255, 3, cv2.LINE_AA)
+
+    # Leg bones follow each limb.
+    leg_count, leg_labels = cv2.connectedComponents((legs.astype(np.uint8) * 255), connectivity=8)
+    cross = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
+    for label in range(1, leg_count):
+        limb = np.where(leg_labels == label, 255, 0).astype(np.uint8)
+        if int(cv2.countNonZero(limb)) < 80:
+            continue
+        work = limb.copy()
+        skel = np.zeros_like(work)
+        while cv2.countNonZero(work):
+            eroded = cv2.erode(work, cross)
+            skel = cv2.bitwise_or(skel, cv2.subtract(work, cv2.dilate(eroded, cross)))
+            work = eroded
+        bone = cv2.bitwise_or(bone, cv2.dilate(skel, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))))
+
+    bone_f = bone.astype(np.float32) / 255.0
+    glow = cv2.GaussianBlur(bone_f, (0, 0), 2.6)
+    core = bone_f
+    tissue[:, :, 0] = np.clip(tissue[:, :, 0] + glow * 90 + core * 170, 0, 255)
+    tissue[:, :, 1] = np.clip(tissue[:, :, 1] + glow * 120 + core * 200, 0, 255)
+    tissue[:, :, 2] = np.clip(tissue[:, :, 2] + glow * 140 + core * 220, 0, 255)
 
     plate = Image.fromarray(tissue.astype(np.uint8), "RGB").convert("RGBA")
     overlay = Image.new("RGBA", plate.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
+    ink = (236, 246, 255, 230)
 
-    ys, xs = np.where(mask)
-    x0, x1 = int(xs.min()), int(xs.max())
-    y0, y1 = int(ys.min()), int(ys.max())
-    bw, bh = x1 - x0 + 1, y1 - y0 + 1
-
-    # Torso columns: tall, and not the narrow head on the left.
-    col_h = mask.sum(axis=0)
-    torso_cols = np.where(col_h > col_h.max() * 0.42)[0]
-    torso_cols = torso_cols[torso_cols > x0 + bw * 0.28]
-    if len(torso_cols) > 8:
-        spine_y = []
-        for x in torso_cols[:: max(1, len(torso_cols) // 80)]:
-            column = dist[:, x]
-            yy = int(np.argmax(column))
-            spine_y.append((int(x), yy))
-        if len(spine_y) > 2:
-            draw.line(spine_y, fill=(232, 246, 255, 210), width=4)
-            # Ribs hang across the upper body, stopping before the legs.
-            for i, (x, sy) in enumerate(spine_y[3:-3]):
-                if i % 3:
-                    continue
-                rows = np.where(mask[:, x])[0]
-                if len(rows) < 10:
-                    continue
-                top, bot = int(rows.min()), int(rows.max())
-                reach = int((sy - top) * 0.92)
-                draw.arc(
-                    [x - reach, top + 4, x + reach, sy + reach * 0.15],
-                    start=200,
-                    end=340,
-                    fill=(214, 236, 250, 180),
-                    width=2,
-                )
-                _ = bot
-
-    # Eye camera, in the head (left, upper).
-    head = mask[:, x0 : x0 + int(bw * 0.34)]
+    # Skull in the head, inset so it reads as bone rather than an outline of the face.
+    head_right = x0 + int(bw * 0.30)
+    head = mask[:, x0:head_right]
     hys, hxs = np.where(head)
+    eye = None
     if len(hxs):
-        hx = x0 + int(np.median(hxs))
-        hy = int(np.percentile(hys, 38))
-        draw_camera(draw, hx, hy, 0.55)
-
-    # Chest camera on the medial axis of the torso.
-    if len(torso_cols):
-        cx = int(np.median(torso_cols[: max(1, len(torso_cols) // 2)]))
-        cy = int(np.argmax(dist[:, cx]))
-        draw_camera(draw, cx, cy, 1.15)
-        # Leads and a small lock, clipped later by the silhouette.
-        draw.line([(cx, cy + 28), (cx, cy + 90), (cx - 18, cy + 120)], fill=(190, 220, 235, 180), width=2)
-        draw.rounded_rectangle(
-            [cx - 10, cy + 118, cx + 10, cy + 142],
-            radius=2,
-            outline=(220, 236, 248, 200),
-            width=2,
+        hx0, hx1 = x0 + int(hxs.min()), x0 + int(hxs.max())
+        hy0, hy1 = int(hys.min()), int(hys.max())
+        draw.ellipse(
+            [hx0 + 18, hy0 + 10, hx1 - 8, hy0 + int((hy1 - hy0) * 0.58)],
+            outline=ink,
+            width=3,
         )
-        draw.arc([cx - 8, cy + 104, cx + 8, cy + 124], 200, 340, fill=(220, 236, 248, 200), width=2)
-        # A short run of circuit pads.
-        for i, dx in enumerate((-48, -24, 24, 48)):
-            px, py = cx + dx, cy + 18 + (i % 2) * 16
-            draw.rectangle([px - 4, py - 3, px + 4, py + 3], outline=(160, 210, 190, 200), width=1)
-            if i:
-                draw.line([(cx, cy), (px, py)], fill=(120, 190, 170, 140), width=1)
+        jaw_y = hy0 + int((hy1 - hy0) * 0.72)
+        draw.arc([hx0 + 10, hy0 + 20, hx1 - 4, jaw_y + 30], 20, 200, fill=ink, width=2)
+        # The real eye is the darkest compact spot in the upper face.
+        # Place the sensor on the eye, inward from the floppy ear.
+        draw_camera(
+            draw,
+            hx0 + int((hx1 - hx0) * 0.64),
+            hy0 + int((hy1 - hy0) * 0.40),
+            0.42,
+        )
+
+    if spine:
+        chest_pts = [p for p in spine if x0 + bw * 0.28 < p[0] < x0 + bw * 0.55]
+        if chest_pts:
+            cx, cy = chest_pts[len(chest_pts) // 2]
+            cy = int(cy + 36)
+            draw_camera(draw, cx, cy, 1.35)
+            draw.line([(cx, cy + 34), (cx + 8, cy + 78)], fill=ink, width=2)
+            draw.rounded_rectangle([cx - 16, cy + 76, cx + 22, cy + 104], radius=3, outline=(170, 220, 190, 220), width=2)
+            for row in range(3):
+                for col in range(4):
+                    px = cx - 10 + col * 8
+                    py = cy + 82 + row * 6
+                    draw.point((px, py), fill=(150, 230, 170, 230))
+            draw.line([(cx + 4, cy + 104), (cx + 4, cy + 132)], fill=ink, width=2)
+            draw.rounded_rectangle([cx - 8, cy + 128, cx + 16, cy + 152], radius=2, outline=ink, width=2)
+            draw.arc([cx - 6, cy + 116, cx + 14, cy + 136], 200, 340, fill=ink, width=2)
 
     composed = plate.copy()
     composed.alpha_composite(overlay)
