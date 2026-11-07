@@ -1,6 +1,8 @@
-# Is That Sheep a Fed?
+# Wollwölklein vom Berg
 
-Static recreation of the ReadyMag page “Is That Pigeon a Fed?”, with the pigeon replaced by the supplied sheep. The page is HTML, CSS, JavaScript, and local files. It does not need Node, and it does not call any analytics or remote hosts.
+Static hero. HTML, CSS, JavaScript, and local files. No Node runtime and no remote requests.
+
+Image, stylesheet, script, and font URLs carry a version query so a warm browser does not reuse a seven-day cache of an older file. The sheep pictures themselves are unchanged: `sheep-normal.png?v=116eeb948f4f6912` and `sheep-xray.png?v=e95f98ae25bf440f`.
 
 Open `index.html` through any static server. For nginx, point a location at this directory.
 
@@ -11,11 +13,7 @@ python3 -m http.server 8765
 
 ## Interaction
 
-Desktop (viewport at least 600px wide): the hero lens follows the pointer with no click. A circular orange crosshair and a soft trail reveal the mechanical scan, and only sheep pixels inside the circle change. Releasing the button leaves the lens up while the pointer remains in the hero. Leaving the hero hides it.
-
-Phone (under 600px): press the sheep and drag. The lens sits above the finger. Lifting the finger closes the reveal. Touching the sheep does not scroll the page; scrolling still works below the hero.
-
-The evidence desk accepts a local image and never uploads it.
+The lens follows the pointer with no click and hides when the pointer leaves. On a phone, press and drag; the lens sits above the finger and closes on release. Touching the sheep does not scroll the page. The document ends at the arrow.
 
 ## Assets
 
