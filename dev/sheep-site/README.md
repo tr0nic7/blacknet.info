@@ -2,7 +2,7 @@
 
 Static hero. HTML, CSS, JavaScript, and local files. No Node runtime and no remote requests.
 
-Image, stylesheet, script, and font URLs carry a version query so a warm browser does not reuse a seven-day cache of an older file. The sheep pictures themselves are unchanged: `sheep-normal.png?v=116eeb948f4f6912` and `sheep-xray.png?v=e95f98ae25bf440f`.
+Image, stylesheet, script, and font URLs carry a version query so a warm browser does not reuse a seven-day cache of an older file. The pictures are versioned: `sheep-normal.png?v=116eeb948f4f6912` and `sheep-xray.png?v=4320bf18384381e6`. The headline uses Instrument Sans.
 
 Open `index.html` through any static server. For nginx, point a location at this directory.
 
@@ -23,4 +23,4 @@ The page ends at the down arrow under the hero. `assets/sheep-normal.png` and `a
 python3 tools/prepare_sheep.py source/sheep-front.jpg
 ```
 
-The headline face is IBM Plex Mono Medium, the font the original page served under the name `custom_186012`. It is included under the SIL Open Font License; see `assets/fonts/OFL.txt`.
+The name is set in Instrument Sans, a variable sans included under the SIL Open Font License (`assets/fonts/InstrumentSans-OFL.txt`). The small labels stay in IBM Plex Mono Medium.
