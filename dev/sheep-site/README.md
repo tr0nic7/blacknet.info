@@ -2,7 +2,7 @@
 
 Static hero. HTML, CSS, JavaScript, and local files. No Node runtime and no remote requests.
 
-Image, stylesheet, script, and font URLs carry a version query so a warm browser does not reuse a seven-day cache of an older file. The pictures are versioned: `sheep-normal.png?v=116eeb948f4f6912` and `sheep-xray.png?v=4320bf18384381e6`. The headline uses Instrument Sans.
+Image, stylesheet, script, and font URLs carry a version query so a warm browser does not reuse a seven-day cache of an older file. The pictures are versioned: `sheep-normal.png?v=116eeb948f4f6912` and `sheep-xray.png?v=054ab200eb964a67`. The headline uses Instrument Sans. On a phone the sheep uses the column width, and the lens magnifies the plate about 3.85 times around the finger while the circle itself sits above it.
 
 Open `index.html` through any static server. For nginx, point a location at this directory.
 

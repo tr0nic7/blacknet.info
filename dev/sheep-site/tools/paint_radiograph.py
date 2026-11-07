@@ -46,10 +46,10 @@ def capsule(density: np.ndarray, p0, p1, radius: float, gain: float = 1.0) -> No
     unit = dist / radius
     inside = unit <= 1.0
     # Smooth cross-section: dense cortex, softer marrow, no hard outline.
-    cortex = np.exp(-((unit - 0.72) ** 2) / 0.045)
-    marrow = np.exp(-(unit ** 2) / 0.55)
-    light = 0.72 + 0.28 * np.clip((dx * normal[0] + dy * normal[1]) / max(radius, 1), -1, 1)
-    value = (0.55 * marrow + 0.85 * cortex) * light * gain
+    cortex = np.exp(-((unit - 0.8) ** 2) / 0.016)
+    marrow = np.exp(-(unit ** 2) / 0.36)
+    light = 0.78 + 0.22 * np.clip((dx * normal[0] + dy * normal[1]) / max(radius, 1), -1, 1)
+    value = (0.7 * marrow + 1.25 * cortex) * light * gain
     density[y0:y1, x0:x1] += np.where(unit <= 1.15, value, 0)
 
 
@@ -71,10 +71,10 @@ def disc(density: np.ndarray, center, rx: float, ry: float, angle: float, gain: 
     ly = -dx * np.sin(ang) + dy * np.cos(ang)
     unit = np.hypot(lx / rx, ly / ry)
     inside = unit <= 1
-    cortex = np.exp(-((unit - 0.7) ** 2) / 0.05)
-    marrow = np.exp(-(unit ** 2) / 0.5)
-    light = 0.7 + 0.3 * np.clip(lx / max(rx, 1), -1, 1)
-    value = (0.6 * marrow + 0.8 * cortex) * light * gain
+    cortex = np.exp(-((unit - 0.78) ** 2) / 0.02)
+    marrow = np.exp(-(unit ** 2) / 0.34)
+    light = 0.78 + 0.22 * np.clip(lx / max(rx, 1), -1, 1)
+    value = (0.72 * marrow + 1.2 * cortex) * light * gain
     density[y0:y1, x0:x1] += np.where(unit <= 1.1, value, 0)
 
 
@@ -142,10 +142,10 @@ def tube(density, pts, r0, r1, gain=1.0):
         walked += length
     radius = r0 + (r1 - r0) * travel
     unit = nearest / np.maximum(radius, 1)
-    marrow = np.exp(-(unit ** 2) / 0.5)
-    cortex = np.exp(-((unit - 0.68) ** 2) / 0.04)
-    shade = 0.7 + 0.3 * np.clip(light / np.maximum(radius, 1), -1, 1)
-    value = (0.62 * marrow + 0.9 * cortex) * shade * gain
+    marrow = np.exp(-(unit ** 2) / 0.34)
+    cortex = np.exp(-((unit - 0.8) ** 2) / 0.014)
+    shade = 0.78 + 0.22 * np.clip(light / np.maximum(radius, 1), -1, 1)
+    value = (0.7 * marrow + 1.25 * cortex) * shade * gain
     density[y0:y1, x0:x1] += np.where(unit <= 1.12, value, 0)
 
 
@@ -221,23 +221,24 @@ def main() -> None:
     disc(bone, (515, 870), 92, 74, -8, 1.0)
     disc(bone, (498, 980), 44, 50, 8, 0.88)
     tube(bone, quad((425, 970), (495, 1105), (610, 1035), 18), 12, 7, 0.95)
-    for i, x in enumerate(range(455, 590, 14)):
-        capsule(bone, (x, 1042), (x + 1, 1072), 5.2, 1.0)
-        capsule(bone, (x + 3, 1070), (x + 4, 1092), 3.2, 0.7)
+    for x in range(446, 604, 22):
+        capsule(bone, (x, 1032), (x, 1084), 8.0, 1.25)
+        capsule(bone, (x + 1, 1080), (x + 2, 1112), 4.2, 0.9)
     darken(bone, (462, 905), 22, 16, 0.88)
     darken(bone, (558, 892), 18, 14, 0.84)
     darken(bone, (500, 1005), 14, 20, 0.6)
 
-    # Fine cancellous texture inside the bone volumes.
+    # Fine grain, then a tight unsharp so a phone loupe stays crisp.
     noise = rng.random((h // 2, w // 2)).astype(np.float32)
     noise = cv2.resize(noise, (w, h), interpolation=cv2.INTER_CUBIC)
-    noise = cv2.GaussianBlur(noise, (0, 0), 1.1)
-    soft = cv2.GaussianBlur(bone, (0, 0), 6)
-    edge = np.clip(bone - soft, 0, None)
-    bone = soft * (0.48 + 0.95 * noise) + edge * 0.55
+    noise = cv2.GaussianBlur(noise, (0, 0), 0.55)
+    soft = cv2.GaussianBlur(bone, (0, 0), 0.9)
+    edge = np.clip(bone - cv2.GaussianBlur(bone, (0, 0), 2.0), 0, None)
+    bone = soft * (0.84 + 0.28 * noise) + edge * 1.35
     bone *= mask
-    film = 1.0 - np.exp(-bone * 1.15)
-    film = np.clip(film, 0, 1)
+    film = 1.0 - np.exp(-np.clip(bone, 0, None) * 0.72)
+    low = cv2.GaussianBlur(film, (0, 0), 1.35)
+    film = np.clip(film + (film - low) * 1.05, 0, 1)
 
     k = film[..., None]
     bone_rgb = np.zeros_like(tissue)
