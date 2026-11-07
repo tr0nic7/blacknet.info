@@ -1,0 +1,345 @@
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../assets/fonts/IBMPlexMono-Medium.ttf") format("truetype");
+}
+
+:root {
+  --paper: #d5d5d0;
+  --orange: #ff5100;
+  --ink: rgba(213, 213, 208, 1);
+  --ink-46: rgba(213, 213, 208, 0.46);
+  --ink-43: rgba(213, 213, 208, 0.43);
+  --ink-60: rgba(213, 213, 208, 0.6);
+  --ink-20: rgba(213, 213, 208, 0.196);
+  --rule: rgba(213, 213, 208, 0.32);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: #000;
+  color: var(--ink);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-synthesis: weight;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+::selection {
+  background: #a2a2a2;
+  color: #111;
+}
+
+.fit {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  background: var(--paper);
+}
+
+.stage * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.w {
+  position: absolute;
+  margin: 0;
+}
+
+.hero-black {
+  background: #000;
+}
+
+.rule {
+  height: 1px;
+  background: var(--paper);
+}
+
+.rule.dim {
+  background: var(--rule);
+}
+
+.tick {
+  width: 1px;
+  background: var(--paper);
+}
+
+.type {
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0;
+}
+
+.display {
+  font-size: 80px;
+  line-height: 82px;
+  font-weight: 700;
+}
+
+.unit {
+  font-size: 8px;
+  line-height: 10px;
+  font-weight: 400;
+}
+
+.piu {
+  font-size: 17px;
+  line-height: 19px;
+  font-weight: 700;
+}
+
+.casefile {
+  font-size: 8px;
+  line-height: 10px;
+  font-weight: 400;
+}
+
+.blurb {
+  width: 193px;
+  font-size: 10px;
+  line-height: 16px;
+  font-weight: 400;
+}
+
+.blurb p {
+  margin: 0;
+}
+
+.blurb .center {
+  text-align: center;
+}
+
+.cue-copy {
+  font-size: 10px;
+  line-height: 16px;
+  font-weight: 400;
+}
+
+.cue-copy .hot {
+  color: var(--orange);
+}
+
+.cue-copy .dim {
+  color: var(--ink-46);
+}
+
+.notice {
+  font-size: 10px;
+  line-height: 16px;
+  font-weight: 400;
+  color: var(--ink-43);
+}
+
+.hairbox {
+  border: 0;
+  background:
+    repeating-linear-gradient(90deg, var(--ink-43) 0 4.33px, transparent 4.33px 5px) top / 100% 1px no-repeat,
+    repeating-linear-gradient(90deg, var(--ink-43) 0 4.33px, transparent 4.33px 5px) bottom / 100% 1px no-repeat,
+    repeating-linear-gradient(180deg, var(--ink-43) 0 4.33px, transparent 4.33px 5px) left / 1px 100% no-repeat,
+    repeating-linear-gradient(180deg, var(--ink-43) 0 4.33px, transparent 4.33px 5px) right / 1px 100% no-repeat;
+}
+
+.icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.cue-btn {
+  width: 34px;
+  height: 34px;
+  border: 2px solid rgba(213, 213, 208, 0.25);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  animation: cue 2s ease-in-out infinite alternate;
+}
+
+.cue-btn img {
+  width: 13px;
+  height: 12px;
+}
+
+.close-title {
+  width: 688.62px;
+  text-align: center;
+  font-size: 26px;
+  line-height: 28px;
+  font-weight: 700;
+}
+
+.close-title p,
+.release p,
+.orange-note p,
+.mobile-title p {
+  margin: 0;
+}
+
+.release {
+  width: 342.68px;
+  text-align: center;
+  font-size: 10px;
+  line-height: 16px;
+}
+
+.release .strong {
+  font-weight: 700;
+}
+
+.release .quiet {
+  font-weight: 400;
+  color: var(--ink-60);
+}
+
+.orange-note {
+  text-align: center;
+  font-size: 10px;
+  line-height: 16px;
+  font-weight: 400;
+  color: var(--orange);
+}
+
+.ticker {
+  overflow: hidden;
+  height: 18px;
+}
+
+.ticker-track {
+  display: flex;
+  width: max-content;
+  gap: 24px;
+  animation: ticker 30s linear infinite alternate;
+}
+
+.ticker span {
+  font-size: 11px;
+  line-height: 11px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+iframe.embed {
+  border: 0;
+  background: transparent;
+  display: block;
+}
+
+.mobile-stage {
+  background: #000;
+}
+
+.m-unit {
+  font-size: 6px;
+  line-height: 10px;
+  font-weight: 400;
+  color: var(--ink-20);
+}
+
+.mobile-title {
+  text-align: center;
+  font-size: 29px;
+  line-height: 31px;
+  font-weight: 700;
+  white-space: pre;
+}
+
+.m-press {
+  text-align: center;
+  font-size: 8px;
+  line-height: 16px;
+  font-weight: 400;
+  color: var(--orange);
+}
+
+.m-blurb {
+  text-align: center;
+  font-size: 9px;
+  line-height: 16px;
+  font-weight: 400;
+}
+
+.m-blurb p {
+  margin: 0;
+}
+
+.m-down {
+  text-align: center;
+  font-size: 16px;
+  line-height: 16px;
+  color: var(--orange);
+  font-weight: 400;
+}
+
+.m-kicker {
+  text-align: center;
+  font-size: 12px;
+  line-height: 14px;
+  font-weight: 700;
+  color: rgba(213, 213, 208, 0.188);
+}
+
+.m-eye {
+  text-align: center;
+  font-size: 25px;
+  line-height: 22px;
+  font-weight: 700;
+}
+
+.m-release {
+  text-align: center;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.m-release .strong {
+  font-weight: 700;
+}
+
+.m-release .quiet {
+  font-weight: 400;
+  color: rgba(213, 213, 208, 0.235);
+}
+
+.m-ticker span {
+  font-size: 11px;
+  line-height: 11px;
+  font-weight: 700;
+}
+
+@keyframes cue {
+  from { transform: translateY(0); }
+  to { transform: translateY(6px); }
+}
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-603px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cue-btn,
+  .ticker-track {
+    animation: none;
+  }
+}

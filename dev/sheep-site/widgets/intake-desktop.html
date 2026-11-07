@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body>
+<div class="pbiu-console" id="pbiuConsole">
+  <div class="pbiu-topbar">
+    <span>PSIU / PUBLIC SHEEP INVESTIGATION UNIT</span>
+    <span id="caseNumber">CASE: UNASSIGNED</span>
+  </div>
+
+  <div class="pbiu-body" id="mainScreen">
+    <section class="pbiu-visual">
+      <label class="upload-panel" id="uploadPanel">
+        <input
+          id="sheepInput"
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+        >
+
+        <span class="micro-label">EVIDENCE INTAKE</span>
+
+        <strong>
+          DROP A PHOTO OF A<br>
+          SUSPICIOUS SHEEP
+        </strong>
+
+        <span class="upload-help">
+          Click or drag JPG, PNG or WebP
+        </span>
+      </label>
+
+      <div class="image-panel" id="imagePanel" hidden>
+        <img
+          id="sheepImage"
+          alt="Uploaded sheep evidence"
+        >
+
+        <div class="grid-overlay"></div>
+        <div class="scan-line" id="scanLine"></div>
+
+        <div class="corner corner--tl"></div>
+        <div class="corner corner--tr"></div>
+        <div class="corner corner--br"></div>
+        <div class="corner corner--bl"></div>
+
+        <div class="image-status" id="imageStatus">
+          INSPECT THE SUBJECT
+        </div>
+
+        <div class="scanner-lens" id="scannerLens" hidden>
+          <div class="scanner-crosshair"></div>
+
+          <div class="scanner-readout" id="scannerReadout">
+            SCANNING
+          </div>
+        </div>
+
+        <div class="interaction-prompt" id="scanPrompt" hidden>
+          <strong>SUBJECT INSPECTION</strong>
+
+          <span id="scanPromptText">
+            Move the scanner around the sheep
+          </span>
+
+          <div class="interaction-meter">
+            <div id="inspectionFill"></div>
+          </div>
+
+          <small id="inspectionPercent">0%</small>
+        </div>
+
+        <div class="transition-prompt" id="transitionPrompt" hidden>
+          <strong>INSPECTION COMPLETE</strong>
+
+          <span>
+            Get ready to startle the subject
+          </span>
+
+          <div class="transition-dots">
+            <i></i>
+            <i></i>
+            <i></i>
+          </div>
+        </div>
+
+        <div class="interaction-prompt" id="startlePrompt" hidden>
+          <strong>STARTLE TEST</strong>
+
+          <span>
+            Shake your mouse rapidly over the sheep
+          </span>
+
+          <div class="interaction-meter">
+            <div id="startleFill"></div>
+          </div>
+
+          <small id="startlePercent">0%</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="pbiu-controls">
+      <div class="status-row">
+        <span>SUBJECT STATUS</span>
+        <strong id="statusText">NO EVIDENCE</strong>
+      </div>
+
+      <div class="score-row">
+        <div>
+          <span>SUSPICION INDEX</span>
+
+          <strong>
+            <b id="scoreNumber">0</b>%
+          </strong>
+        </div>
+
+        <div class="score-track">
+          <div id="scoreFill"></div>
+        </div>
+      </div>
+
+      <div class="tests">
+        <div class="test" id="testUpload">
+          <span>01</span>
+          <p>Evidence received</p>
+          <b>—</b>
+        </div>
+
+        <div class="test" id="testInspection">
+          <span>02</span>
+          <p>Subject inspection</p>
+          <b>—</b>
+        </div>
+
+        <div class="test" id="testStartle">
+          <span>03</span>
+          <p>Startle response</p>
+          <b>—</b>
+        </div>
+      </div>
+
+      <p class="instruction" id="instruction">
+        Upload a sheep photograph to begin.
+      </p>
+
+      <div class="button-row">
+        <button
+          class="primary-button"
+          id="actionButton"
+          type="button"
+          disabled
+        >
+          AWAITING EVIDENCE
+        </button>
+
+        <button
+          class="secondary-button"
+          id="resetButton"
+          type="button"
+        >
+          RESET
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div class="result-screen" id="resultScreen" hidden>
+    <div class="result-image">
+      <img
+        id="resultImage"
+        alt="Investigated sheep"
+      >
+
+      <div class="result-stamp" id="resultStamp">
+        CASE REVIEWED
+      </div>
+    </div>
+
+    <div class="result-details">
+      <span class="micro-label">
+        FINAL SHEEP ASSESSMENT
+      </span>
+
+      <h2 id="resultTitle">
+        LIKELY EMPLOYED BY THE GOVERNMENT
+      </h2>
+
+      <p class="result-score">
+        <strong id="resultScore">84%</strong>
+
+        <span id="resultSentence">
+          chance this sheep has a government email address
+        </span>
+      </p>
+
+      <ul id="resultFindings"></ul>
+
+      <div class="result-buttons">
+        <button id="scanAgainButton" type="button">
+          INVESTIGATE ANOTHER SHEEP
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  :root {
+    --bg: #d5d5d0;
+    --black: #101010;
+    --orange: #ff4f12;
+    --green: #c5ff38;
+    --line: rgba(16, 16, 16, 0.22);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: transparent;
+    color: var(--black);
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+
+  button {
+    border-radius: 0;
+  }
+
+  .pbiu-console {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid var(--black);
+    background: var(--bg);
+  }
+
+  .pbiu-topbar {
+    display: flex;
+    height: 36px;
+    padding: 0 14px;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--black);
+    font-family: "Courier New", monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+
+  .pbiu-body,
+  .result-screen {
+    display: grid;
+    height: calc(100% - 36px);
+    min-height: 0;
+    grid-template-columns: 58% 42%;
+  }
+
+  .pbiu-visual,
+  .result-image {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    border-right: 1px solid var(--black);
+    background: #111;
+  }
+
+  .upload-panel {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    padding: 24px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px),
+      var(--bg);
+    background-size: 30px 30px;
+    cursor: pointer;
+    text-align: center;
+    transition:
+      color 160ms ease,
+      background-color 160ms ease;
+  }
+
+  .upload-panel:hover,
+  .upload-panel.is-dragging {
+    color: var(--green);
+    background-color: var(--black);
+  }
+
+  .upload-panel input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  .micro-label,
+  .upload-help {
+    font-family: "Courier New", monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .micro-label {
+    font-size: 8px;
+  }
+
+  .upload-panel strong {
+    margin-top: 18px;
+    font-size: clamp(34px, 4.4vw, 64px);
+    line-height: 0.88;
+    letter-spacing: -0.065em;
+  }
+
+  .upload-help {
+    margin-top: 16px;
+    font-size: 8px;
+  }
+
+  .image-panel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+
+  .image-panel img,
+  .result-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(
+        rgba(197, 255, 56, 0.11) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        90deg,
+        rgba(197, 255, 56, 0.11) 1px,
+        transparent 1px
+      );
+    background-size: 28px 28px;
+    pointer-events: none;
+  }
+
+  .scan-line {
+    position: absolute;
+    top: -5%;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    opacity: 0;
+    background: var(--green);
+    box-shadow:
+      0 0 14px var(--green),
+      0 0 38px rgba(197, 255, 56, 0.65);
+    pointer-events: none;
+  }
+
+  .scan-line.is-active {
+    opacity: 1;
+    animation: scan 1.05s linear infinite;
+  }
+
+  @keyframes scan {
+    from {
+      top: -4%;
+    }
+
+    to {
+      top: 104%;
+    }
+  }
+
+  .corner {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    color: var(--green);
+    pointer-events: none;
+  }
+
+  .corner--tl {
+    top: 12px;
+    left: 12px;
+    border-top: 2px solid;
+    border-left: 2px solid;
+  }
+
+  .corner--tr {
+    top: 12px;
+    right: 12px;
+    border-top: 2px solid;
+    border-right: 2px solid;
+  }
+
+  .corner--br {
+    right: 12px;
+    bottom: 12px;
+    border-right: 2px solid;
+    border-bottom: 2px solid;
+  }
+
+  .corner--bl {
+    bottom: 12px;
+    left: 12px;
+    border-bottom: 2px solid;
+    border-left: 2px solid;
+  }
+
+  .image-status {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    z-index: 8;
+    padding: 6px 9px;
+    background: var(--green);
+    color: var(--black);
+    font-family: "Courier New", monospace;
+    font-size: 8px;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .scanner-lens {
+    position: absolute;
+    z-index: 7;
+    top: 50%;
+    left: 50%;
+    width: 132px;
+    height: 132px;
+    border: 2px solid var(--green);
+    border-radius: 50%;
+    background:
+      radial-gradient(
+        circle,
+        rgba(197, 255, 56, 0.08) 0%,
+        rgba(197, 255, 56, 0.03) 58%,
+        rgba(16, 16, 16, 0.34) 59%,
+        rgba(16, 16, 16, 0.6) 100%
+      );
+    box-shadow:
+      0 0 18px rgba(197, 255, 56, 0.8),
+      inset 0 0 18px rgba(197, 255, 56, 0.24);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .scanner-lens::before,
+  .scanner-lens::after {
+    content: "";
+    position: absolute;
+    background: var(--green);
+  }
+
+  .scanner-lens::before {
+    top: 50%;
+    left: -12px;
+    width: calc(100% + 24px);
+    height: 1px;
+  }
+
+  .scanner-lens::after {
+    top: -12px;
+    left: 50%;
+    width: 1px;
+    height: calc(100% + 24px);
+  }
+
+  .scanner-crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 10px var(--orange);
+    transform: translate(-50%, -50%);
+  }
+
+  .scanner-readout {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    min-width: 92px;
+    padding: 4px 6px;
+    background: var(--black);
+    color: var(--green);
+    font-family: "Courier New", monospace;
+    font-size: 7px;
+    line-height: 1.1;
+    text-align: center;
+    transform: translateX(-50%);
+  }
+
+  .scanner-lens.is-alert {
+    border-color: var(--orange);
+    box-shadow:
+      0 0 22px var(--orange),
+      inset 0 0 20px rgba(255, 79, 18, 0.3);
+  }
+
+  .scanner-lens.is-alert::before,
+  .scanner-lens.is-alert::after {
+    background: var(--orange);
+  }
+
+  .interaction-prompt,
+  .transition-prompt {
+    position: absolute;
+    z-index: 9;
+    left: 50%;
+    bottom: 18px;
+    width: min(340px, calc(100% - 40px));
+    padding: 11px 12px;
+    border: 1px solid var(--green);
+    background: rgba(16, 16, 16, 0.94);
+    color: var(--green);
+    font-family: "Courier New", monospace;
+    text-align: center;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .interaction-prompt strong,
+  .transition-prompt strong {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+
+  .interaction-prompt span,
+  .transition-prompt span {
+    display: block;
+    margin-top: 5px;
+    font-size: 8px;
+    line-height: 1.25;
+  }
+
+  .interaction-prompt small {
+    display: block;
+    margin-top: 5px;
+    font-size: 7px;
+  }
+
+  .interaction-meter {
+    height: 6px;
+    margin-top: 9px;
+    overflow: hidden;
+    border: 1px solid var(--green);
+  }
+
+  .interaction-meter div {
+    width: 0;
+    height: 100%;
+    background: var(--green);
+    transition: width 70ms linear;
+  }
+
+  .transition-prompt {
+    bottom: 50%;
+    width: min(320px, calc(100% - 40px));
+    padding: 18px;
+    transform: translate(-50%, 50%);
+  }
+
+  .transition-dots {
+    display: flex;
+    margin-top: 12px;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .transition-dots i {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: dotPulse 700ms ease-in-out infinite;
+  }
+
+  .transition-dots i:nth-child(2) {
+    animation-delay: 120ms;
+  }
+
+  .transition-dots i:nth-child(3) {
+    animation-delay: 240ms;
+  }
+
+  @keyframes dotPulse {
+    0%,
+    100% {
+      opacity: 0.25;
+      transform: scale(0.8);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .pbiu-controls,
+  .result-details {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  .status-row,
+  .score-row {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--black);
+  }
+
+  .status-row span,
+  .score-row span {
+    display: block;
+    font-family: "Courier New", monospace;
+    font-size: 7px;
+    letter-spacing: 0.08em;
+  }
+
+  .status-row strong {
+    display: block;
+    margin-top: 4px;
+    color: var(--orange);
+    font-size: 13px;
+  }
+
+  .score-row {
+    display: grid;
+    grid-template-columns: 112px 1fr;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .score-row strong {
+    display: block;
+    margin-top: 3px;
+    font-size: 25px;
+    line-height: 1;
+  }
+
+  .score-track {
+    height: 6px;
+    overflow: hidden;
+    border: 1px solid var(--black);
+  }
+
+  .score-track div {
+    width: 0;
+    height: 100%;
+    background: var(--orange);
+    transition: width 220ms ease;
+  }
+
+  .tests {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-bottom: 1px solid var(--black);
+  }
+
+  .test {
+    min-width: 0;
+    padding: 7px 9px;
+    border-right: 1px solid var(--black);
+  }
+
+  .test:last-child {
+    border-right: 0;
+  }
+
+  .test span,
+  .test b {
+    font-family: "Courier New", monospace;
+    font-size: 7px;
+  }
+
+  .test p {
+    min-height: 18px;
+    margin: 4px 0;
+    font-size: 9px;
+    line-height: 1.1;
+  }
+
+  .test.is-complete b {
+    color: var(--orange);
+  }
+
+  .instruction {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  .button-row {
+    display: grid;
+    grid-template-columns: 1fr 78px;
+    border-top: 1px solid var(--black);
+  }
+
+  .button-row button,
+  .result-buttons button {
+    min-height: 40px;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .primary-button {
+    background: var(--orange);
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .primary-button:disabled {
+    background: #b8b8b3;
+    color: #71716d;
+    cursor: not-allowed;
+  }
+
+  .secondary-button {
+    border-left: 1px solid var(--black) !important;
+    background: transparent;
+    font-family: "Courier New", monospace;
+    font-size: 7px;
+  }
+
+  .secondary-button:hover {
+    background: var(--black);
+    color: var(--green);
+  }
+
+  .result-screen {
+    grid-template-columns: 46% 54%;
+  }
+
+  .result-stamp {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    padding: 8px 10px;
+    border: 3px solid var(--orange);
+    color: var(--orange);
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    transform: rotate(-7deg);
+  }
+
+  .result-details {
+    padding: 18px 22px 12px;
+    overflow: hidden;
+  }
+
+  .result-details h2 {
+    margin: 14px 0 8px;
+    font-size: clamp(30px, 3.3vw, 50px);
+    line-height: 0.9;
+    letter-spacing: -0.06em;
+  }
+
+  .result-score {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .result-score strong {
+    margin-right: 4px;
+    color: var(--orange);
+    font-size: 21px;
+  }
+
+  .result-details ul {
+    margin: 18px 0;
+    padding-left: 20px;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .result-details li + li {
+    margin-top: 7px;
+  }
+
+  .result-buttons {
+    margin-top: auto;
+    border: 1px solid var(--black);
+  }
+
+  .result-buttons button {
+    width: 100%;
+    background: var(--orange);
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .result-buttons button:hover {
+    background: var(--black);
+    color: var(--green);
+  }
+
+  @media (max-width: 760px) {
+    html,
+    body {
+      overflow: auto;
+    }
+
+    .pbiu-console {
+      min-height: 760px;
+    }
+
+    .pbiu-body,
+    .result-screen {
+      height: auto;
+      grid-template-columns: 1fr;
+    }
+
+    .pbiu-visual,
+    .result-image {
+      min-height: 380px;
+      border-right: 0;
+      border-bottom: 1px solid var(--black);
+    }
+
+    .pbiu-controls,
+    .result-details {
+      min-height: 320px;
+    }
+
+    .result-details ul {
+      font-size: 11px;
+    }
+  }
+</style>
+
+<script>
+  window.addEventListener("load", function () {
+    const input = document.getElementById("sheepInput");
+    const uploadPanel = document.getElementById("uploadPanel");
+    const imagePanel = document.getElementById("imagePanel");
+    const sheepImage = document.getElementById("sheepImage");
+    const resultImage = document.getElementById("resultImage");
+
+    const caseNumber = document.getElementById("caseNumber");
+    const statusText = document.getElementById("statusText");
+    const scoreNumber = document.getElementById("scoreNumber");
+    const scoreFill = document.getElementById("scoreFill");
+    const instruction = document.getElementById("instruction");
+    const imageStatus = document.getElementById("imageStatus");
+
+    const scannerLens = document.getElementById("scannerLens");
+    const scannerReadout = document.getElementById("scannerReadout");
+    const scanPrompt = document.getElementById("scanPrompt");
+    const scanPromptText = document.getElementById("scanPromptText");
+    const inspectionFill = document.getElementById("inspectionFill");
+    const inspectionPercent = document.getElementById("inspectionPercent");
+
+    const transitionPrompt =
+      document.getElementById("transitionPrompt");
+
+    const startlePrompt =
+      document.getElementById("startlePrompt");
+
+    const startleFill =
+      document.getElementById("startleFill");
+
+    const startlePercent =
+      document.getElementById("startlePercent");
+
+    const scanLine = document.getElementById("scanLine");
+
+    const testUpload = document.getElementById("testUpload");
+    const testInspection = document.getElementById("testInspection");
+    const testStartle = document.getElementById("testStartle");
+
+    const actionButton = document.getElementById("actionButton");
+    const resetButton = document.getElementById("resetButton");
+
+    const mainScreen = document.getElementById("mainScreen");
+    const resultScreen = document.getElementById("resultScreen");
+    const resultTitle = document.getElementById("resultTitle");
+    const resultScore = document.getElementById("resultScore");
+    const resultSentence = document.getElementById("resultSentence");
+    const resultFindings = document.getElementById("resultFindings");
+    const resultStamp = document.getElementById("resultStamp");
+    const scanAgainButton = document.getElementById("scanAgainButton");
+
+    let imageUrl = "";
+    let score = 0;
+
+    let inspectionComplete = false;
+    let startleComplete = false;
+
+    let inspectionActive = false;
+    let visitedCells = new Set();
+
+    let startleActive = false;
+    let movementTotal = 0;
+    let previousX = null;
+    let previousY = null;
+
+    let lastReadoutChange = 0;
+    let readoutIndex = 0;
+    let startleDelayTimer = null;
+    let diagnosticTimer = null;
+
+    const gridColumns = 8;
+    const gridRows = 5;
+    const requiredCells = 18;
+
+    const startleGoal = 650;
+    const startleDelay = 1400;
+
+    const scannerMessages = [
+      "FEATHER",
+      "MORE FEATHER",
+      "POSSIBLE WIRE",
+      "NOTHING USEFUL",
+      "SUSPICIOUS LUMP",
+      "TINY MICROPHONE?",
+      "CHECKING WING",
+      "UNEXPLAINED SHIMMER",
+      "LIKELY BEAK",
+      "ZOOMING IN",
+      "NO COMMENT",
+      "VERY SHEEP-SHAPED"
+    ];
+
+    const suspiciousMessages = [
+      "POSSIBLE WIRE",
+      "SUSPICIOUS LUMP",
+      "TINY MICROPHONE?",
+      "UNEXPLAINED SHIMMER"
+    ];
+
+    const resultGroups = {
+      high: {
+        verdicts: [
+          "LIKELY EMPLOYED BY THE GOVERNMENT",
+          "YEAH, THIS SHEEP DEFINITELY HAS A JOB",
+          "FULL-TIME SURVEILLANCE PROFESSIONAL",
+          "ALMOST CERTAINLY ON THE PAYROLL"
+        ],
+
+        stamps: [
+          "VERY SUSPICIOUS",
+          "EMPLOYMENT LIKELY",
+          "FEDERAL ENERGY",
+          "CLEARANCE SUSPECTED"
+        ],
+
+        results: [
+          {
+            percent: 94,
+            sentence:
+              "chance this sheep has a government email address"
+          },
+          {
+            percent: 89,
+            sentence:
+              "chance this sheep has attended at least one confidential meeting"
+          },
+          {
+            percent: 86,
+            sentence:
+              "chance it knows your current location"
+          },
+          {
+            percent: 92,
+            sentence:
+              "chance it has a tiny work laptop somewhere"
+          },
+          {
+            percent: 88,
+            sentence:
+              "chance it reports directly to someone important"
+          }
+        ],
+
+        findings: [
+          "Maintained eye contact beyond civilian limits",
+          "Seems extremely comfortable near CCTV",
+          "Has the posture of someone with a work email",
+          "Could absolutely be wearing a tiny microphone",
+          "Would not explain what department it works for",
+          "Neck shimmer feels slightly classified",
+          "May be reporting directly to another sheep",
+          "Appears to have received formal training",
+          "Has been standing there for way too long",
+          "General confidence remains unexplained"
+        ]
+      },
+
+      medium: {
+        verdicts: [
+          "FREELANCE INFORMANT AT BEST",
+          "POSSIBLY GOVERNMENT-ADJACENT",
+          "NOT FULL-TIME, BUT DEFINITELY INVOLVED",
+          "PART-TIME SURVEILLANCE ENERGY"
+        ],
+
+        stamps: [
+          "INFORMANT ENERGY",
+          "CASE REMAINS OPEN",
+          "SOMETHING IS OFF",
+          "SIDE HUSTLE SUSPECTED"
+        ],
+
+        results: [
+          {
+            percent: 76,
+            sentence:
+              "chance this sheep is forwarding your information somewhere"
+          },
+          {
+            percent: 71,
+            sentence:
+              "chance it reports directly to another sheep"
+          },
+          {
+            percent: 67,
+            sentence:
+              "chance it has access to a company laptop"
+          },
+          {
+            percent: 73,
+            sentence:
+              "chance it is working on a freelance basis"
+          },
+          {
+            percent: 64,
+            sentence:
+              "chance it has signed at least one NDA"
+          }
+        ],
+
+        findings: [
+          "Accepted no responsibility for its actions",
+          "Appears familiar with several public benches",
+          "Could be wearing a tiny microphone",
+          "No obvious reason to be this confident",
+          "Full-body scan revealed several unanswered questions",
+          "Would not provide professional references",
+          "May have an unofficial arrangement with local authorities",
+          "Current employment status remains unclear",
+          "Knows too much about the area",
+          "Possibly operating without a contract"
+        ]
+      },
+
+      low: {
+        verdicts: [
+          "JUST A NORMAL LITTLE GUY",
+          "NO GOVERNMENT ACTIVITY DETECTED",
+          "TOO EMPTY-HEADED FOR INTELLIGENCE WORK",
+          "PROBABLY JUST HERE FOR BREAD",
+          "CIVILIAN. BARELY",
+          "NOT A FED. JUST A LITTLE GUY"
+        ],
+
+        stamps: [
+          "JUST A SHEEP",
+          "NO THOUGHTS DETECTED",
+          "BREAD-MOTIVATED",
+          "CLEARANCE DENIED",
+          "LITTLE GUY CONFIRMED",
+          "CASE UNINTERESTING"
+        ],
+
+        results: [
+          {
+            percent: 18,
+            sentence:
+              "chance of government employment. Not a single thought behind those eyes"
+          },
+          {
+            percent: 12,
+            sentence:
+              "chance it is a fed. Mostly just interested in your sandwich"
+          },
+          {
+            percent: 7,
+            sentence:
+              "chance of surveillance activity. Mostly just standing there"
+          },
+          {
+            percent: 3,
+            sentence:
+              "chance this sheep has clearance. It barely has balance"
+          },
+          {
+            percent: 0,
+            sentence:
+              "chance of government affiliation. Just a regular little guy"
+          },
+          {
+            percent: 14,
+            sentence:
+              "chance it works for the state. It has already forgotten why it came here"
+          }
+        ],
+
+        findings: [
+          "Not a single thought behind those eyes",
+          "Appears motivated entirely by crumbs",
+          "Lost focus halfway through the inspection",
+          "No visible understanding of consequences",
+          "Would absolutely walk into a glass door",
+          "Current objective appears to be standing there",
+          "Unable to confirm it knows where it is",
+          "May have forgotten this interaction already",
+          "No evidence of professional ambition",
+          "Little guy appears to be doing its best"
+        ]
+      }
+    };
+
+    function randomItem(array) {
+      return array[
+        Math.floor(Math.random() * array.length)
+      ];
+    }
+
+    function shuffle(array) {
+      return [...array].sort(function () {
+        return Math.random() - 0.5;
+      });
+    }
+
+    function setScore(value) {
+      score = Math.max(
+        0,
+        Math.min(99, Math.round(value))
+      );
+
+      scoreNumber.textContent = score;
+      scoreFill.style.width = score + "%";
+    }
+
+    function completeTest(element, text) {
+      element.classList.add("is-complete");
+      element.querySelector("b").textContent = text;
+    }
+
+    function createCase() {
+      caseNumber.textContent =
+        "CASE: PSIU-" +
+        Math.floor(1000 + Math.random() * 9000);
+    }
+
+    function updateScannerMessage(timestamp) {
+      if (timestamp - lastReadoutChange < 480) {
+        return;
+      }
+
+      lastReadoutChange = timestamp;
+
+      readoutIndex =
+        (readoutIndex + 1) %
+        scannerMessages.length;
+
+      const message =
+        scannerMessages[readoutIndex];
+
+      scannerReadout.textContent = message;
+
+      scannerLens.classList.toggle(
+        "is-alert",
+        suspiciousMessages.includes(message)
+      );
+    }
+
+    function startInspection() {
+      inspectionActive = true;
+      visitedCells.clear();
+
+      scannerLens.hidden = false;
+      scanPrompt.hidden = false;
+
+      inspectionFill.style.width = "0%";
+      inspectionPercent.textContent = "0%";
+
+      scannerReadout.textContent = "SCANNING";
+      scannerLens.classList.remove("is-alert");
+    }
+
+    function registerInspectionPoint(x, y) {
+      const panel =
+        imagePanel.getBoundingClientRect();
+
+      const relativeX = Math.max(
+        0,
+        Math.min(
+          panel.width - 1,
+          x - panel.left
+        )
+      );
+
+      const relativeY = Math.max(
+        0,
+        Math.min(
+          panel.height - 1,
+          y - panel.top
+        )
+      );
+
+      const column = Math.floor(
+        relativeX /
+        (panel.width / gridColumns)
+      );
+
+      const row = Math.floor(
+        relativeY /
+        (panel.height / gridRows)
+      );
+
+      visitedCells.add(
+        column + "-" + row
+      );
+
+      const nearbyColumn = Math.min(
+        gridColumns - 1,
+        column + 1
+      );
+
+      visitedCells.add(
+        nearbyColumn + "-" + row
+      );
+
+      const progress = Math.min(
+        100,
+        (visitedCells.size / requiredCells) * 100
+      );
+
+      inspectionFill.style.width =
+        progress + "%";
+
+      inspectionPercent.textContent =
+        Math.round(progress) + "%";
+
+      if (progress < 25) {
+        scanPromptText.textContent =
+          "Move the scanner around the sheep";
+      } else if (progress < 50) {
+        scanPromptText.textContent =
+          "Mostly feathers so far";
+      } else if (progress < 75) {
+        scanPromptText.textContent =
+          "Something in here looks expensive";
+      } else if (progress < 100) {
+        scanPromptText.textContent =
+          "Keep going. This is getting weird";
+      }
+
+      if (
+        visitedCells.size >= requiredCells
+      ) {
+        finishInspection();
+      }
+    }
+
+    function finishInspection() {
+      inspectionActive = false;
+      inspectionComplete = true;
+
+      scannerLens.hidden = true;
+      scanPrompt.hidden = true;
+
+      completeTest(
+        testInspection,
+        "COMPLETE"
+      );
+
+      setScore(score + 24);
+
+      statusText.textContent =
+        "INSPECTION COMPLETE";
+
+      instruction.textContent =
+        "Get ready to startle the subject.";
+
+      imageStatus.textContent =
+        "PREPARING STARTLE TEST";
+
+      transitionPrompt.hidden = false;
+
+      startleActive = false;
+      movementTotal = 0;
+      previousX = null;
+      previousY = null;
+
+      clearTimeout(startleDelayTimer);
+
+      startleDelayTimer =
+        window.setTimeout(
+          beginStartleTest,
+          startleDelay
+        );
+    }
+
+    function beginStartleTest() {
+      transitionPrompt.hidden = true;
+
+      statusText.textContent =
+        "STARTLE TEST READY";
+
+      instruction.textContent =
+        "Shake your mouse rapidly back and forth over the sheep image.";
+
+      imageStatus.textContent =
+        "SHAKE MOUSE TO STARTLE SUBJECT";
+
+      startlePrompt.hidden = false;
+      startleFill.style.width = "0%";
+      startlePercent.textContent = "0%";
+
+      movementTotal = 0;
+      previousX = null;
+      previousY = null;
+      startleActive = true;
+    }
+
+    function finishStartleTest() {
+      startleActive = false;
+      startleComplete = true;
+
+      startlePrompt.hidden = true;
+
+      completeTest(
+        testStartle,
+        "CALM"
+      );
+
+      setScore(score + 22);
+
+      statusText.textContent =
+        "TRAINING SUSPECTED";
+
+      instruction.textContent =
+        "Subject remained calm. Field tests complete.";
+
+      imageStatus.textContent =
+        "SUBJECT REMAINED CALM";
+
+      actionButton.disabled = false;
+      actionButton.textContent =
+        "RUN DIAGNOSTIC";
+    }
+
+    function loadImage(file) {
+      if (
+        !file ||
+        !file.type.startsWith("image/")
+      ) {
+        statusText.textContent =
+          "INVALID EVIDENCE";
+
+        return;
+      }
+
+      resetTestStateOnly();
+
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+      }
+
+      imageUrl =
+        URL.createObjectURL(file);
+
+      sheepImage.src = imageUrl;
+      resultImage.src = imageUrl;
+
+      uploadPanel.hidden = true;
+      imagePanel.hidden = false;
+
+      createCase();
+      setScore(18);
+
+      completeTest(
+        testUpload,
+        "LOGGED"
+      );
+
+      statusText.textContent =
+        "SUBJECT RECEIVED";
+
+      instruction.textContent =
+        "Move your cursor around the sheep to inspect the subject.";
+
+      imageStatus.textContent =
+        "INSPECT THE SUBJECT";
+
+      actionButton.disabled = true;
+      actionButton.textContent =
+        "COMPLETE TESTS";
+
+      window.setTimeout(
+        startInspection,
+        180
+      );
+    }
+
+    function resetTestStateOnly() {
+      clearTimeout(startleDelayTimer);
+
+      if (diagnosticTimer) {
+        window.clearInterval(
+          diagnosticTimer
+        );
+      }
+
+      inspectionComplete = false;
+      startleComplete = false;
+
+      inspectionActive = false;
+      visitedCells.clear();
+
+      startleActive = false;
+      movementTotal = 0;
+      previousX = null;
+      previousY = null;
+
+      lastReadoutChange = 0;
+      readoutIndex = 0;
+
+      scannerLens.hidden = true;
+      scannerLens.classList.remove(
+        "is-alert"
+      );
+
+      scanPrompt.hidden = true;
+      transitionPrompt.hidden = true;
+      startlePrompt.hidden = true;
+
+      inspectionFill.style.width = "0%";
+      inspectionPercent.textContent = "0%";
+
+      startleFill.style.width = "0%";
+      startlePercent.textContent = "0%";
+
+      [
+        testUpload,
+        testInspection,
+        testStartle
+      ].forEach(function (test) {
+        test.classList.remove(
+          "is-complete"
+        );
+
+        test.querySelector("b").textContent =
+          "—";
+      });
+    }
+
+    input.addEventListener(
+      "change",
+      function () {
+        loadImage(input.files[0]);
+      }
+    );
+
+    uploadPanel.addEventListener(
+      "dragover",
+      function (event) {
+        event.preventDefault();
+
+        uploadPanel.classList.add(
+          "is-dragging"
+        );
+      }
+    );
+
+    uploadPanel.addEventListener(
+      "dragleave",
+      function () {
+        uploadPanel.classList.remove(
+          "is-dragging"
+        );
+      }
+    );
+
+    uploadPanel.addEventListener(
+      "drop",
+      function (event) {
+        event.preventDefault();
+
+        uploadPanel.classList.remove(
+          "is-dragging"
+        );
+
+        loadImage(
+          event.dataTransfer.files[0]
+        );
+      }
+    );
+
+    imagePanel.addEventListener(
+      "pointermove",
+      function (event) {
+        const panel =
+          imagePanel.getBoundingClientRect();
+
+        if (inspectionActive) {
+          const localX =
+            event.clientX - panel.left;
+
+          const localY =
+            event.clientY - panel.top;
+
+          scannerLens.style.left =
+            localX + "px";
+
+          scannerLens.style.top =
+            localY + "px";
+
+          registerInspectionPoint(
+            event.clientX,
+            event.clientY
+          );
+
+          updateScannerMessage(
+            performance.now()
+          );
+        }
+
+        if (!startleActive) {
+          return;
+        }
+
+        if (
+          previousX !== null &&
+          previousY !== null
+        ) {
+          movementTotal += Math.hypot(
+            event.clientX - previousX,
+            event.clientY - previousY
+          );
+        }
+
+        previousX = event.clientX;
+        previousY = event.clientY;
+
+        const progress = Math.min(
+          100,
+          (movementTotal / startleGoal) * 100
+        );
+
+        startleFill.style.width =
+          progress + "%";
+
+        startlePercent.textContent =
+          Math.round(progress) + "%";
+
+        if (
+          movementTotal >= startleGoal
+        ) {
+          finishStartleTest();
+        }
+      }
+    );
+
+    imagePanel.addEventListener(
+      "pointerleave",
+      function () {
+        previousX = null;
+        previousY = null;
+      }
+    );
+
+    actionButton.addEventListener(
+      "click",
+      function () {
+        if (
+          !inspectionComplete ||
+          !startleComplete
+        ) {
+          return;
+        }
+
+        actionButton.disabled = true;
+        actionButton.textContent =
+          "CHECKING SHEEP";
+
+        scanLine.classList.add(
+          "is-active"
+        );
+
+        const messages = [
+          "LOOKING AT THE SHEEP",
+          "CHECKING FOR WIRES",
+          "ZOOMING IN FOR NO REASON",
+          "REVIEWING BENCH HISTORY",
+          "CHECKING BREADCRUMB BEHAVIOR",
+          "CONTACTING REFERENCES",
+          "REFERENCES ARE ALSO SHEEP"
+        ];
+
+        let index = 0;
+
+        statusText.textContent =
+          messages[0];
+
+        instruction.textContent =
+          "Give us a second. This sheep has a lot going on.";
+
+        diagnosticTimer =
+          window.setInterval(
+            function () {
+              index += 1;
+
+              setScore(
+                score +
+                Math.floor(
+                  2 + Math.random() * 4
+                )
+              );
+
+              if (
+                index < messages.length
+              ) {
+                statusText.textContent =
+                  messages[index];
+              } else {
+                window.clearInterval(
+                  diagnosticTimer
+                );
+
+                window.setTimeout(
+                  function () {
+                    scanLine.classList.remove(
+                      "is-active"
+                    );
+
+                    showResult();
+                  },
+                  1600
+                );
+              }
+            },
+            1100
+          );
+      }
+    );
+
+    function chooseResultGroup() {
+      const roll = Math.random();
+
+      if (roll < 0.38) {
+        return resultGroups.high;
+      }
+
+      if (roll < 0.72) {
+        return resultGroups.medium;
+      }
+
+      return resultGroups.low;
+    }
+
+    function showResult() {
+      const group =
+        chooseResultGroup();
+
+      const selectedResult =
+        randomItem(group.results);
+
+      resultTitle.textContent =
+        randomItem(group.verdicts);
+
+      resultStamp.textContent =
+        randomItem(group.stamps);
+
+      resultScore.textContent =
+        selectedResult.percent + "%";
+
+      resultSentence.textContent =
+        selectedResult.sentence.replace(/[.!?]+$/, "");
+
+      resultFindings.innerHTML = "";
+
+      shuffle(group.findings)
+        .slice(0, 4)
+        .forEach(function (finding) {
+          const item =
+            document.createElement("li");
+
+          item.textContent = finding.replace(/[.!?]+$/, "");
+
+          resultFindings.appendChild(item);
+        });
+
+      mainScreen.hidden = true;
+      resultScreen.hidden = false;
+    }
+
+    function resetApp() {
+      input.value = "";
+
+      resetTestStateOnly();
+
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+        imageUrl = "";
+      }
+
+      uploadPanel.hidden = false;
+      imagePanel.hidden = true;
+      mainScreen.hidden = false;
+      resultScreen.hidden = true;
+
+      sheepImage.removeAttribute("src");
+      resultImage.removeAttribute("src");
+
+      scannerReadout.textContent =
+        "SCANNING";
+
+      caseNumber.textContent =
+        "CASE: UNASSIGNED";
+
+      statusText.textContent =
+        "NO EVIDENCE";
+
+      instruction.textContent =
+        "Upload a sheep photograph to begin.";
+
+      imageStatus.textContent =
+        "INSPECT THE SUBJECT";
+
+      actionButton.disabled = true;
+      actionButton.textContent =
+        "AWAITING EVIDENCE";
+
+      scanLine.classList.remove(
+        "is-active"
+      );
+
+      setScore(0);
+    }
+
+    resetButton.addEventListener(
+      "click",
+      resetApp
+    );
+
+    scanAgainButton.addEventListener(
+      "click",
+      resetApp
+    );
+
+    setScore(0);
+  });
+</script>
+</body></html>

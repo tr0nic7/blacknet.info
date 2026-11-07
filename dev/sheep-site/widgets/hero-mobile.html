@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body>
+<div class="mobile-sheep-widget">
+  <div class="mobile-sheep-stage" id="mobileSheepStage">
+    <!-- Normal sheep -->
+    <img
+      class="sheep-image sheep-normal"
+      src="../assets/sheep-normal.png"
+      alt="Sheep"
+      draggable="false"
+    >
+
+    <!-- Mechanical sheep revealed inside the scanner -->
+    <div class="mechanical-mask" id="mechanicalMask">
+      <img
+        class="sheep-image sheep-mechanical"
+        src="../assets/sheep-xray.png"
+        alt="Mechanical sheep"
+        draggable="false"
+      >
+    </div>
+
+    <!-- Scanner -->
+    <div class="mobile-scanner" id="mobileScanner">
+      <div class="scanner-center"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  :root {
+    --orange: #ff4f12;
+
+    /*
+     * Mobile scanner size.
+     * Increase this number if you want a larger reveal.
+     */
+    --scanner-size: 190px;
+    --scanner-radius: 95px;
+
+    /*
+     * Moves the scanner above the fingertip.
+     */
+    --finger-offset: 62px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: transparent;
+  }
+
+  .mobile-sheep-widget {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding:
+      calc(var(--scanner-radius) + var(--finger-offset))
+      var(--scanner-radius)
+      var(--scanner-radius);
+    overflow: hidden;
+    background: transparent;
+  }
+
+  .mobile-sheep-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+
+    /*
+     * Allows the finger-drag reveal to work properly.
+     * Because this widget should cover only the sheep,
+     * users can still scroll outside the sheep area.
+     */
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .sheep-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .mechanical-mask {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    clip-path: circle(0px at 50% 50%);
+    pointer-events: none;
+    transition:
+      opacity 140ms ease,
+      clip-path 90ms linear;
+  }
+
+  .mobile-scanner {
+    position: absolute;
+    z-index: 10;
+    top: 50%;
+    left: 50%;
+    width: var(--scanner-size);
+    height: var(--scanner-size);
+    opacity: 0;
+    border: 2px solid var(--orange);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0.94);
+    pointer-events: none;
+
+    background:
+      radial-gradient(
+        circle,
+        rgba(255, 79, 18, 0.07) 0%,
+        rgba(255, 79, 18, 0.025) 52%,
+        transparent 72%
+      );
+
+    box-shadow:
+      0 0 18px rgba(255, 79, 18, 0.58),
+      inset 0 0 18px rgba(255, 79, 18, 0.12);
+
+    transition:
+      opacity 140ms ease,
+      transform 140ms ease;
+  }
+
+  .mobile-scanner::before,
+  .mobile-scanner::after {
+    content: "";
+    position: absolute;
+    background: var(--orange);
+    pointer-events: none;
+  }
+
+  .mobile-scanner::before {
+    top: 50%;
+    left: -11px;
+    width: calc(100% + 22px);
+    height: 1px;
+    transform: translateY(-50%);
+  }
+
+  .mobile-scanner::after {
+    top: -11px;
+    left: 50%;
+    width: 1px;
+    height: calc(100% + 22px);
+    transform: translateX(-50%);
+  }
+
+  .scanner-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow:
+      0 0 8px var(--orange),
+      0 0 16px rgba(255, 79, 18, 0.5);
+    transform: translate(-50%, -50%);
+  }
+
+  .mobile-sheep-stage.is-scanning .mobile-scanner {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .mobile-sheep-stage.is-scanning .mechanical-mask {
+    opacity: 1;
+  }
+
+  /*
+   * Slight visual feedback when the finger first presses.
+   */
+  .mobile-sheep-stage.is-pressed .mobile-scanner {
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+
+  @media (max-width: 390px) {
+    :root {
+      --scanner-size: 170px;
+      --scanner-radius: 85px;
+      --finger-offset: 54px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mobile-scanner,
+    .mechanical-mask {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  window.addEventListener("load", function () {
+    const stage =
+      document.getElementById("mobileSheepStage");
+
+    const scanner =
+      document.getElementById("mobileScanner");
+
+    const mechanicalMask =
+      document.getElementById("mechanicalMask");
+
+    const scannerRadius = 95;
+    const fingerOffset = 62;
+
+    let isScanning = false;
+    let activePointerId = null;
+
+    function getMobileSettings() {
+      const isSmallScreen =
+        window.innerWidth <= 390;
+
+      return {
+        radius: isSmallScreen ? 85 : scannerRadius,
+        offset: isSmallScreen ? 54 : fingerOffset
+      };
+    }
+
+    function positionScanner(event) {
+      const rect =
+        stage.getBoundingClientRect();
+
+      const settings =
+        getMobileSettings();
+
+      /*
+       * Cursor/finger location inside the widget.
+       */
+      const fingerX =
+        event.clientX - rect.left;
+
+      const fingerY =
+        event.clientY - rect.top;
+
+      /*
+       * Place the visible scanner above the finger.
+       */
+      const scannerX = Math.max(
+        -settings.radius,
+        Math.min(
+          rect.width + settings.radius,
+          fingerX
+        )
+      );
+
+      const scannerY = Math.max(
+        -settings.radius,
+        Math.min(
+          rect.height + settings.radius,
+          fingerY - settings.offset
+        )
+      );
+
+      scanner.style.left =
+        scannerX + "px";
+
+      scanner.style.top =
+        scannerY + "px";
+
+      mechanicalMask.style.clipPath =
+        "circle(" +
+        settings.radius +
+        "px at " +
+        scannerX +
+        "px " +
+        scannerY +
+        "px)";
+    }
+
+    function beginScanning(event) {
+      /*
+       * Only respond to the primary finger or mouse button.
+       */
+      if (
+        event.pointerType === "mouse" &&
+        event.button !== 0
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+
+      isScanning = true;
+      activePointerId = event.pointerId;
+
+      stage.setPointerCapture(
+        event.pointerId
+      );
+
+      stage.classList.add(
+        "is-scanning",
+        "is-pressed"
+      );
+
+      positionScanner(event);
+
+      window.setTimeout(function () {
+        stage.classList.remove(
+          "is-pressed"
+        );
+      }, 130);
+    }
+
+    function continueScanning(event) {
+      if (
+        !isScanning ||
+        event.pointerId !== activePointerId
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      positionScanner(event);
+    }
+
+    function finishScanning(event) {
+      if (
+        !isScanning ||
+        (
+          activePointerId !== null &&
+          event.pointerId !== activePointerId
+        )
+      ) {
+        return;
+      }
+
+      isScanning = false;
+
+      if (
+        activePointerId !== null &&
+        stage.hasPointerCapture(
+          activePointerId
+        )
+      ) {
+        stage.releasePointerCapture(
+          activePointerId
+        );
+      }
+
+      activePointerId = null;
+
+      stage.classList.remove(
+        "is-scanning",
+        "is-pressed"
+      );
+
+      /*
+       * Close the reveal after the finger lifts.
+       */
+      window.setTimeout(function () {
+        if (!isScanning) {
+          mechanicalMask.style.clipPath =
+            "circle(0px at 50% 50%)";
+        }
+      }, 120);
+    }
+
+    stage.addEventListener(
+      "pointerdown",
+      beginScanning
+    );
+
+    stage.addEventListener(
+      "pointermove",
+      continueScanning
+    );
+
+    stage.addEventListener(
+      "pointerup",
+      finishScanning
+    );
+
+    stage.addEventListener(
+      "pointercancel",
+      finishScanning
+    );
+
+    stage.addEventListener(
+      "lostpointercapture",
+      function () {
+        if (isScanning) {
+          isScanning = false;
+          activePointerId = null;
+
+          stage.classList.remove(
+            "is-scanning",
+            "is-pressed"
+          );
+
+          mechanicalMask.style.clipPath =
+            "circle(0px at 50% 50%)";
+        }
+      }
+    );
+  });
+</script>
+</body></html>

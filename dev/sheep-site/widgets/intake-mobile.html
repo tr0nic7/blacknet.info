@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body>
+<div class="pbiu-console" id="pbiuConsole">
+  <div class="pbiu-topbar">
+    <span>PSIU / MOBILE FIELD UNIT</span>
+    <span id="caseNumber">CASE: UNASSIGNED</span>
+  </div>
+
+  <main class="app-screen" id="mainScreen">
+    <section class="visual-area">
+      <label class="upload-panel" id="uploadPanel">
+        <input
+          id="sheepInput"
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+        >
+
+        <span class="micro-label">
+          EVIDENCE INTAKE
+        </span>
+
+        <strong>
+          TAP TO UPLOAD A<br>
+          SUSPICIOUS SHEEP
+        </strong>
+
+        <span class="upload-help">
+          JPG, PNG OR WEBP
+        </span>
+      </label>
+
+      <div class="image-panel" id="imagePanel" hidden>
+        <img
+          id="sheepImage"
+          alt="Uploaded sheep evidence"
+          draggable="false"
+        >
+
+        <div class="grid-overlay"></div>
+        <div class="scan-line" id="scanLine"></div>
+
+        <div class="corner corner--tl"></div>
+        <div class="corner corner--tr"></div>
+        <div class="corner corner--br"></div>
+        <div class="corner corner--bl"></div>
+
+        <div class="image-status" id="imageStatus">
+          SUBJECT RECEIVED
+        </div>
+
+        <div class="visual-card" id="scanStartCard">
+          <strong>SUBJECT READY</strong>
+
+          <span>
+            Begin automatic inspection
+          </span>
+
+          <button
+            class="visual-button"
+            id="startScanButton"
+            type="button"
+          >
+            BEGIN SCAN
+          </button>
+        </div>
+
+        <div class="live-scan" id="liveScan" hidden>
+          <span class="live-label">
+            LIVE SCAN
+          </span>
+
+          <strong id="scannerReadout">
+            PREPARING SCAN
+          </strong>
+
+          <div class="scan-meter">
+            <div id="scanFill"></div>
+          </div>
+
+          <small id="scanPercent">
+            0%
+          </small>
+        </div>
+
+        <div
+          class="visual-card visual-card--center"
+          id="scanCompleteCard"
+          hidden
+        >
+          <strong>SCAN COMPLETE</strong>
+
+          <span>
+            Several questions remain
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section class="control-area">
+      <div class="status-strip">
+        <div>
+          <span>SUBJECT STATUS</span>
+
+          <strong id="statusText">
+            NO EVIDENCE
+          </strong>
+        </div>
+
+        <div class="score-block">
+          <span>SUSPICION INDEX</span>
+
+          <strong>
+            <b id="scoreNumber">0</b>%
+          </strong>
+        </div>
+      </div>
+
+      <div class="score-track">
+        <div id="scoreFill"></div>
+      </div>
+
+      <div class="test-strip">
+        <div class="test" id="testUpload">
+          <span>01</span>
+          <p>EVIDENCE</p>
+          <b>—</b>
+        </div>
+
+        <div class="test" id="testScan">
+          <span>02</span>
+          <p>SCAN</p>
+          <b>—</b>
+        </div>
+
+        <div class="test" id="testBehavior">
+          <span>03</span>
+          <p>BEHAVIOR</p>
+          <b>—</b>
+        </div>
+      </div>
+
+      <div class="content-panel">
+        <div
+          class="instruction-panel"
+          id="instructionPanel"
+        >
+          <p id="instruction">
+            Tap above to upload a sheep photograph
+          </p>
+        </div>
+
+        <div
+          class="question-card"
+          id="questionOne"
+          hidden
+        >
+          <span class="question-number">
+            BEHAVIOR TEST 01
+          </span>
+
+          <h3>
+            DID THE SHEEP MAINTAIN
+            UNCOMFORTABLE EYE CONTACT?
+          </h3>
+
+          <div class="answer-grid">
+            <button
+              class="answer-button"
+              type="button"
+              data-question="one"
+              data-answer="yes"
+            >
+              YES, TOO LONG
+            </button>
+
+            <button
+              class="answer-button"
+              type="button"
+              data-question="one"
+              data-answer="no"
+            >
+              NO
+            </button>
+          </div>
+        </div>
+
+        <div
+          class="question-card"
+          id="questionTwo"
+          hidden
+        >
+          <span class="question-number">
+            BEHAVIOR TEST 02
+          </span>
+
+          <h3>
+            WHAT HAPPENED WHEN
+            YOU MOVED CLOSER?
+          </h3>
+
+          <div class="answer-grid answer-grid--stacked">
+            <button
+              class="answer-button"
+              type="button"
+              data-question="two"
+              data-answer="calm"
+            >
+              REMAINED SUSPICIOUSLY CALM
+            </button>
+
+            <button
+              class="answer-button"
+              type="button"
+              data-question="two"
+              data-answer="bread"
+            >
+              WALKED AWAY FOR BREAD
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button
+          class="primary-button"
+          id="actionButton"
+          type="button"
+          disabled
+        >
+          AWAITING EVIDENCE
+        </button>
+
+        <button
+          class="secondary-button"
+          id="resetButton"
+          type="button"
+        >
+          RESET
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <section
+    class="result-screen"
+    id="resultScreen"
+    hidden
+  >
+    <div class="result-image">
+      <img
+        id="resultImage"
+        alt="Investigated sheep"
+      >
+
+      <div
+        class="result-stamp"
+        id="resultStamp"
+      >
+        CASE REVIEWED
+      </div>
+    </div>
+
+    <div class="result-details">
+      <span class="micro-label">
+        FINAL SHEEP ASSESSMENT
+      </span>
+
+      <h2 id="resultTitle">
+        LIKELY EMPLOYED BY THE GOVERNMENT
+      </h2>
+
+      <p class="result-score">
+        <strong id="resultScore">
+          84%
+        </strong>
+
+        <span id="resultSentence">
+          chance this sheep has a government email address
+        </span>
+      </p>
+
+      <ul id="resultFindings"></ul>
+
+      <button
+        class="investigate-button"
+        id="scanAgainButton"
+        type="button"
+      >
+        INVESTIGATE ANOTHER SHEEP
+      </button>
+    </div>
+  </section>
+</div>
+
+<style>
+  :root {
+    --bg: #d5d5d0;
+    --black: #101010;
+    --orange: #ff4f12;
+    --green: #c5ff38;
+    --line: rgba(16, 16, 16, 0.22);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: transparent;
+    color: var(--black);
+    font-family: Arial, Helvetica, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    text-align: center;
+    line-height: 1.15;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .pbiu-console {
+    width: 100%;
+    height: 720px;
+    max-height: 720px;
+    overflow: hidden;
+    border: 1px solid var(--black);
+    background: var(--bg);
+  }
+
+  .pbiu-topbar {
+    display: flex;
+    height: 34px;
+    padding: 7px 9px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-bottom: 1px solid var(--black);
+    font-family: "Courier New", monospace;
+    font-size: 7px;
+    letter-spacing: 0.06em;
+  }
+
+  .pbiu-topbar span:last-child {
+    text-align: right;
+  }
+
+  .app-screen {
+    display: grid;
+    height: 685px;
+    grid-template-rows: 310px 375px;
+  }
+
+  .visual-area {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--black);
+    background: #111;
+  }
+
+  .upload-panel {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 310px;
+    padding: 20px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background:
+      linear-gradient(
+        var(--line) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        90deg,
+        var(--line) 1px,
+        transparent 1px
+      ),
+      var(--bg);
+    background-size: 24px 24px;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .upload-panel input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .micro-label,
+  .upload-help {
+    font-family: "Courier New", monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .micro-label {
+    font-size: 8px;
+  }
+
+  .upload-panel strong {
+    margin-top: 17px;
+    font-size: clamp(28px, 8vw, 38px);
+    line-height: 0.93;
+    letter-spacing: -0.055em;
+  }
+
+  .upload-help {
+    margin-top: 14px;
+    font-size: 8px;
+  }
+
+  .image-panel {
+    position: relative;
+    width: 100%;
+    height: 310px;
+    overflow: hidden;
+  }
+
+  .image-panel img,
+  .result-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(
+        rgba(197, 255, 56, 0.1) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        90deg,
+        rgba(197, 255, 56, 0.1) 1px,
+        transparent 1px
+      );
+    background-size: 24px 24px;
+    pointer-events: none;
+  }
+
+  .corner {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    color: var(--green);
+    pointer-events: none;
+  }
+
+  .corner--tl {
+    top: 10px;
+    left: 10px;
+    border-top: 2px solid;
+    border-left: 2px solid;
+  }
+
+  .corner--tr {
+    top: 10px;
+    right: 10px;
+    border-top: 2px solid;
+    border-right: 2px solid;
+  }
+
+  .corner--br {
+    right: 10px;
+    bottom: 10px;
+    border-right: 2px solid;
+    border-bottom: 2px solid;
+  }
+
+  .corner--bl {
+    bottom: 10px;
+    left: 10px;
+    border-bottom: 2px solid;
+    border-left: 2px solid;
+  }
+
+  .image-status {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    z-index: 8;
+    max-width: calc(100% - 60px);
+    padding: 5px 8px;
+    overflow: hidden;
+    background: var(--green);
+    color: var(--black);
+    font-family: "Courier New", monospace;
+    font-size: 7px;
+    text-overflow: ellipsis;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .scan-line {
+    position: absolute;
+    z-index: 5;
+    top: -5%;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    opacity: 0;
+    background: var(--green);
+    box-shadow:
+      0 0 14px var(--green),
+      0 0 34px rgba(197, 255, 56, 0.65);
+    pointer-events: none;
+  }
+
+  .scan-line.is-active {
+    opacity: 1;
+    animation: scan 1s linear infinite;
+  }
+
+  @keyframes scan {
+    from {
+      top: -4%;
+    }
+
+    to {
+      top: 104%;
+    }
+  }
+
+  .visual-card,
+  .live-scan {
+    position: absolute;
+    z-index: 10;
+    left: 50%;
+    width: calc(100% - 30px);
+    max-width: 330px;
+    padding: 10px;
+    border: 1px solid var(--green);
+    background: rgba(16, 16, 16, 0.95);
+    color: var(--green);
+    font-family: "Courier New", monospace;
+    text-align: center;
+    transform: translateX(-50%);
+  }
+
+  .visual-card {
+    bottom: 12px;
+  }
+
+  .visual-card--center {
+    top: 50%;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+  }
+
+  .live-scan {
+    top: 42px;
+  }
+
+  .visual-card strong,
+  .live-scan strong {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+
+  .visual-card span {
+    display: block;
+    margin-top: 5px;
+    font-size: 8px;
+  }
+
+  .live-label {
+    display: block;
+    margin-bottom: 4px;
+    opacity: 0.6;
+    font-size: 7px;
+    letter-spacing: 0.1em;
+  }
+
+  .live-scan.is-alert {
+    border-color: var(--orange);
+    color: var(--orange);
+  }
+
+  .scan-meter {
+    height: 6px;
+    margin-top: 8px;
+    overflow: hidden;
+    border: 1px solid currentColor;
+  }
+
+  .scan-meter div {
+    width: 0;
+    height: 100%;
+    background: currentColor;
+    transition: width 300ms linear;
+  }
+
+  .live-scan small {
+    display: block;
+    margin-top: 4px;
+    font-size: 7px;
+  }
+
+  .visual-button {
+    width: 100%;
+    min-height: 38px;
+    margin-top: 9px;
+    border: 0;
+    background: var(--green);
+    color: var(--black);
+    -webkit-text-fill-color: var(--black);
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  .control-area {
+    display: flex;
+    height: 375px;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .status-strip {
+    display: grid;
+    grid-template-columns: 1fr 100px;
+    min-height: 54px;
+    padding: 8px 10px 6px;
+    gap: 8px;
+    border-bottom: 1px solid var(--black);
+  }
+
+  .status-strip span {
+    display: block;
+    font-family: "Courier New", monospace;
+    font-size: 7px;
+    letter-spacing: 0.08em;
+  }
+
+  .status-strip strong {
+    display: block;
+    margin-top: 3px;
+    color: var(--orange);
+    font-size: 12px;
+    line-height: 1.05;
+  }
+
+  .score-block {
+    text-align: right;
+  }
+
+  .score-block strong {
+    font-size: 22px;
+  }
+
+  .score-track {
+    height: 7px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--black);
+  }
+
+  .score-track div {
+    width: 0;
+    height: 100%;
+    background: var(--orange);
+    transition: width 300ms ease;
+  }
+
+  .test-strip {
+    display: grid;
+    height: 52px;
+    flex-shrink: 0;
+    grid-template-columns: repeat(3, 1fr);
+    border-bottom: 1px solid var(--black);
+  }
+
+  .test {
+    min-width: 0;
+    padding: 6px;
+    border-right: 1px solid var(--black);
+  }
+
+  .test:last-child {
+    border-right: 0;
+  }
+
+  .test span,
+  .test b {
+    font-family: "Courier New", monospace;
+    font-size: 6px;
+  }
+
+  .test p {
+    margin: 4px 0 2px;
+    font-size: 8px;
+    line-height: 1;
+  }
+
+  .test.is-complete b {
+    color: var(--orange);
+  }
+
+  .content-panel {
+    position: relative;
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .instruction-panel,
+  .question-card {
+    position: absolute;
+    inset: 0;
+    padding: 14px 11px;
+    background: var(--bg);
+  }
+
+  .instruction-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .instruction-panel p {
+    width: 100%;
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.35;
+    text-align: center;
+  }
+
+  .question-number {
+    display: block;
+    font-family: "Courier New", monospace;
+    font-size: 7px;
+    letter-spacing: 0.08em;
+  }
+
+  .question-card h3 {
+    margin: 7px 0 10px;
+    font-size: 15px;
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+  }
+
+  .answer-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .answer-grid--stacked {
+    grid-template-columns: 1fr;
+  }
+
+  .answer-button {
+    min-height: 39px;
+    padding: 6px;
+    border: 1px solid var(--black);
+    background: transparent;
+    color: var(--black);
+    -webkit-text-fill-color: var(--black);
+    font-size: 8px;
+    font-weight: 800;
+  }
+
+  .answer-button.is-selected,
+  .answer-button:active {
+    background: var(--orange);
+  }
+
+  .button-row {
+    display: grid;
+    height: 46px;
+    flex-shrink: 0;
+    grid-template-columns: 1fr 70px;
+    border-top: 1px solid var(--black);
+  }
+
+  .button-row button {
+    width: 100%;
+    min-height: 46px;
+    padding: 0 10px;
+    border: 0;
+    text-align: center;
+  }
+
+  .primary-button {
+    background: var(--orange);
+    color: var(--black);
+    -webkit-text-fill-color: var(--black);
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .primary-button:disabled {
+    background: #b8b8b3;
+    color: #71716d;
+    -webkit-text-fill-color: #71716d;
+  }
+
+  .secondary-button {
+    border-left: 1px solid var(--black) !important;
+    background: transparent;
+    color: var(--black);
+    -webkit-text-fill-color: var(--black);
+    font-family: "Courier New", monospace;
+    font-size: 7px;
+  }
+
+  .result-screen {
+    display: grid;
+    height: 685px;
+    grid-template-rows: 270px 415px;
+  }
+
+  .result-image {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--black);
+    background: #111;
+  }
+
+  .result-stamp {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    max-width: 140px;
+    padding: 6px 8px;
+    border: 3px solid var(--orange);
+    color: var(--orange);
+    font-family: "Courier New", monospace;
+    font-size: 9px;
+    font-weight: 700;
+    transform: rotate(-6deg);
+  }
+
+  .result-details {
+    display: flex;
+    min-height: 0;
+    padding: 17px 15px 12px;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .result-details h2 {
+    margin: 10px 0 8px;
+    font-size: clamp(27px, 8vw, 36px);
+    line-height: 0.92;
+    letter-spacing: -0.055em;
+  }
+
+  .result-score {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  .result-score strong {
+    margin-right: 3px;
+    color: var(--orange);
+    font-size: 21px;
+  }
+
+  .result-details ul {
+    margin: 14px 0 10px;
+    padding-left: 18px;
+    font-family: "Courier New", monospace;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  .result-details li + li {
+    margin-top: 5px;
+  }
+
+  .investigate-button {
+    width: 100%;
+    min-height: 43px;
+    margin-top: auto;
+    padding: 0 12px;
+    border: 1px solid var(--black);
+    background: var(--orange);
+    color: var(--black) !important;
+    -webkit-text-fill-color: var(--black) !important;
+    font-size: 10px;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  @media (max-width: 390px) {
+    .pbiu-console {
+      height: 700px;
+      max-height: 700px;
+    }
+
+    .app-screen,
+    .result-screen {
+      height: 665px;
+    }
+
+    .app-screen {
+      grid-template-rows: 295px 370px;
+    }
+
+    .upload-panel,
+    .image-panel {
+      height: 295px;
+    }
+
+    .result-screen {
+      grid-template-rows: 255px 410px;
+    }
+
+    .upload-panel strong {
+      font-size: 28px;
+    }
+
+    .result-details h2 {
+      font-size: 27px;
+    }
+  }
+</style>
+
+<script>
+  window.addEventListener("load", function () {
+    const input =
+      document.getElementById("sheepInput");
+
+    const uploadPanel =
+      document.getElementById("uploadPanel");
+
+    const imagePanel =
+      document.getElementById("imagePanel");
+
+    const sheepImage =
+      document.getElementById("sheepImage");
+
+    const resultImage =
+      document.getElementById("resultImage");
+
+    const caseNumber =
+      document.getElementById("caseNumber");
+
+    const imageStatus =
+      document.getElementById("imageStatus");
+
+    const statusText =
+      document.getElementById("statusText");
+
+    const scoreNumber =
+      document.getElementById("scoreNumber");
+
+    const scoreFill =
+      document.getElementById("scoreFill");
+
+    const instruction =
+      document.getElementById("instruction");
+
+    const instructionPanel =
+      document.getElementById("instructionPanel");
+
+    const scanStartCard =
+      document.getElementById("scanStartCard");
+
+    const startScanButton =
+      document.getElementById("startScanButton");
+
+    const liveScan =
+      document.getElementById("liveScan");
+
+    const scannerReadout =
+      document.getElementById("scannerReadout");
+
+    const scanFill =
+      document.getElementById("scanFill");
+
+    const scanPercent =
+      document.getElementById("scanPercent");
+
+    const scanLine =
+      document.getElementById("scanLine");
+
+    const scanCompleteCard =
+      document.getElementById("scanCompleteCard");
+
+    const questionOne =
+      document.getElementById("questionOne");
+
+    const questionTwo =
+      document.getElementById("questionTwo");
+
+    const testUpload =
+      document.getElementById("testUpload");
+
+    const testScan =
+      document.getElementById("testScan");
+
+    const testBehavior =
+      document.getElementById("testBehavior");
+
+    const actionButton =
+      document.getElementById("actionButton");
+
+    const resetButton =
+      document.getElementById("resetButton");
+
+    const mainScreen =
+      document.getElementById("mainScreen");
+
+    const resultScreen =
+      document.getElementById("resultScreen");
+
+    const resultTitle =
+      document.getElementById("resultTitle");
+
+    const resultScore =
+      document.getElementById("resultScore");
+
+    const resultSentence =
+      document.getElementById("resultSentence");
+
+    const resultFindings =
+      document.getElementById("resultFindings");
+
+    const resultStamp =
+      document.getElementById("resultStamp");
+
+    const scanAgainButton =
+      document.getElementById("scanAgainButton");
+
+    const answerButtons =
+      document.querySelectorAll(".answer-button");
+
+    let imageUrl = "";
+    let score = 0;
+
+    let scanComplete = false;
+    let questionOneAnswered = false;
+    let questionTwoAnswered = false;
+
+    let eyeContactAnswer = null;
+    let approachAnswer = null;
+
+    let scanTimer = null;
+    let diagnosticTimer = null;
+
+    const scannerMessages = [
+      {
+        text: "CHECKING FEATHERS",
+        alert: false
+      },
+      {
+        text: "POSSIBLE WIRE DETECTED",
+        alert: true
+      },
+      {
+        text: "CHECKING BEAK",
+        alert: false
+      },
+      {
+        text: "TINY MICROPHONE?",
+        alert: true
+      },
+      {
+        text: "ANALYZING NECK SHIMMER",
+        alert: true
+      },
+      {
+        text: "DATABASE ALSO RUN BY SHEEP",
+        alert: true
+      },
+      {
+        text: "VERY SHEEP-SHAPED",
+        alert: false
+      }
+    ];
+
+    const resultGroups = {
+      high: {
+        verdicts: [
+          "LIKELY EMPLOYED BY THE GOVERNMENT",
+          "YEAH, THIS SHEEP DEFINITELY HAS A JOB",
+          "FULL-TIME SURVEILLANCE PROFESSIONAL",
+          "ALMOST CERTAINLY ON THE PAYROLL"
+        ],
+
+        stamps: [
+          "VERY SUSPICIOUS",
+          "EMPLOYMENT LIKELY",
+          "FEDERAL ENERGY",
+          "CLEARANCE SUSPECTED"
+        ],
+
+        results: [
+          {
+            percent: 94,
+            sentence:
+              "chance this sheep has a government email address"
+          },
+          {
+            percent: 89,
+            sentence:
+              "chance this sheep has attended at least one confidential meeting"
+          },
+          {
+            percent: 86,
+            sentence:
+              "chance it knows your current location"
+          },
+          {
+            percent: 92,
+            sentence:
+              "chance it has a tiny work laptop somewhere"
+          },
+          {
+            percent: 88,
+            sentence:
+              "chance it reports directly to someone important"
+          }
+        ],
+
+        findings: [
+          "Maintained eye contact beyond civilian limits",
+          "Seems extremely comfortable near CCTV",
+          "Has the posture of someone with a work email",
+          "Could absolutely be wearing a tiny microphone",
+          "Would not explain what department it works for",
+          "Neck shimmer feels slightly classified",
+          "May be reporting directly to another sheep",
+          "Appears to have received formal training",
+          "Has been standing there for way too long",
+          "General confidence remains unexplained"
+        ]
+      },
+
+      medium: {
+        verdicts: [
+          "FREELANCE INFORMANT AT BEST",
+          "POSSIBLY GOVERNMENT-ADJACENT",
+          "NOT FULL-TIME, BUT DEFINITELY INVOLVED",
+          "PART-TIME SURVEILLANCE ENERGY"
+        ],
+
+        stamps: [
+          "INFORMANT ENERGY",
+          "CASE REMAINS OPEN",
+          "SOMETHING IS OFF",
+          "SIDE HUSTLE SUSPECTED"
+        ],
+
+        results: [
+          {
+            percent: 76,
+            sentence:
+              "chance this sheep is forwarding your information somewhere"
+          },
+          {
+            percent: 71,
+            sentence:
+              "chance it reports directly to another sheep"
+          },
+          {
+            percent: 67,
+            sentence:
+              "chance it has access to a company laptop"
+          },
+          {
+            percent: 73,
+            sentence:
+              "chance it is working on a freelance basis"
+          },
+          {
+            percent: 64,
+            sentence:
+              "chance it has signed at least one NDA"
+          }
+        ],
+
+        findings: [
+          "Accepted no responsibility for its actions",
+          "Appears familiar with several public benches",
+          "Could be wearing a tiny microphone",
+          "No obvious reason to be this confident",
+          "Full-body scan revealed several unanswered questions",
+          "Would not provide professional references",
+          "May have an unofficial arrangement with local authorities",
+          "Current employment status remains unclear",
+          "Knows too much about the area",
+          "Possibly operating without a contract"
+        ]
+      },
+
+      low: {
+        verdicts: [
+          "JUST A NORMAL LITTLE GUY",
+          "NO GOVERNMENT ACTIVITY DETECTED",
+          "TOO EMPTY-HEADED FOR INTELLIGENCE WORK",
+          "PROBABLY JUST HERE FOR BREAD",
+          "CIVILIAN. BARELY.",
+          "NOT A FED. JUST A LITTLE GUY."
+        ],
+
+        stamps: [
+          "JUST A SHEEP",
+          "NO THOUGHTS DETECTED",
+          "BREAD-MOTIVATED",
+          "CLEARANCE DENIED",
+          "LITTLE GUY CONFIRMED",
+          "CASE UNINTERESTING"
+        ],
+
+        results: [
+          {
+            percent: 18,
+            sentence:
+              "chance of government employment. Not a single thought behind those eyes"
+          },
+          {
+            percent: 12,
+            sentence:
+              "chance it is a fed. Mostly just interested in your sandwich"
+          },
+          {
+            percent: 7,
+            sentence:
+              "chance of surveillance activity. Mostly just standing there"
+          },
+          {
+            percent: 3,
+            sentence:
+              "chance this sheep has clearance. It barely has balance"
+          },
+          {
+            percent: 0,
+            sentence:
+              "chance of government affiliation. Just a regular little guy"
+          },
+          {
+            percent: 14,
+            sentence:
+              "chance it works for the state. It has already forgotten why it came here"
+          }
+        ],
+
+        findings: [
+          "Not a single thought behind those eyes",
+          "Appears motivated entirely by crumbs",
+          "Lost focus halfway through the inspection",
+          "No visible understanding of consequences",
+          "Would absolutely walk into a glass door",
+          "Current objective appears to be standing there",
+          "Unable to confirm it knows where it is",
+          "May have forgotten this interaction already",
+          "No evidence of professional ambition",
+          "Little guy appears to be doing its best"
+        ]
+      }
+    };
+
+    function randomItem(array) {
+      return array[
+        Math.floor(Math.random() * array.length)
+      ];
+    }
+
+    function shuffle(array) {
+      return [...array].sort(function () {
+        return Math.random() - 0.5;
+      });
+    }
+
+    function setScore(value) {
+      score = Math.max(
+        0,
+        Math.min(99, Math.round(value))
+      );
+
+      scoreNumber.textContent = score;
+      scoreFill.style.width = score + "%";
+    }
+
+    function completeTest(element, text) {
+      element.classList.add("is-complete");
+      element.querySelector("b").textContent = text;
+    }
+
+    function createCase() {
+      caseNumber.textContent =
+        "CASE: PSIU-" +
+        Math.floor(1000 + Math.random() * 9000);
+    }
+
+    function showInstruction() {
+      instructionPanel.hidden = false;
+      questionOne.hidden = true;
+      questionTwo.hidden = true;
+    }
+
+    function showQuestionOne() {
+      instructionPanel.hidden = true;
+      questionOne.hidden = false;
+      questionTwo.hidden = true;
+    }
+
+    function showQuestionTwo() {
+      instructionPanel.hidden = true;
+      questionOne.hidden = true;
+      questionTwo.hidden = false;
+    }
+
+    function loadImage(file) {
+      if (
+        !file ||
+        !file.type.startsWith("image/")
+      ) {
+        statusText.textContent =
+          "INVALID EVIDENCE";
+
+        return;
+      }
+
+      resetTestStateOnly();
+
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+      }
+
+      imageUrl =
+        URL.createObjectURL(file);
+
+      sheepImage.src = imageUrl;
+      resultImage.src = imageUrl;
+
+      uploadPanel.hidden = true;
+      imagePanel.hidden = false;
+
+      createCase();
+      setScore(10);
+
+      completeTest(
+        testUpload,
+        "LOGGED"
+      );
+
+      statusText.textContent =
+        "SUBJECT RECEIVED";
+
+      instruction.textContent =
+        "Tap begin scan to inspect the subject";
+
+      imageStatus.textContent =
+        "SUBJECT RECEIVED";
+
+      scanStartCard.hidden = false;
+
+      actionButton.disabled = true;
+      actionButton.textContent =
+        "COMPLETE TESTS";
+
+      showInstruction();
+    }
+
+    function startAutomaticScan() {
+      if (scanTimer) {
+        window.clearInterval(scanTimer);
+      }
+
+      scanStartCard.hidden = true;
+      scanCompleteCard.hidden = true;
+      liveScan.hidden = false;
+
+      scanLine.classList.add("is-active");
+
+      imageStatus.textContent =
+        "AUTOMATIC SCAN ACTIVE";
+
+      statusText.textContent =
+        "SCANNING SUBJECT";
+
+      instruction.textContent =
+        "Please remain calm while we inspect the sheep";
+
+      showInstruction();
+
+      let messageIndex = 0;
+
+      scannerReadout.textContent =
+        scannerMessages[0].text;
+
+      liveScan.classList.toggle(
+        "is-alert",
+        scannerMessages[0].alert
+      );
+
+      scanFill.style.width =
+        (100 / scannerMessages.length) + "%";
+
+      scanPercent.textContent =
+        Math.round(
+          100 / scannerMessages.length
+        ) + "%";
+
+      scanTimer =
+        window.setInterval(function () {
+          messageIndex += 1;
+
+          if (
+            messageIndex >=
+            scannerMessages.length
+          ) {
+            window.clearInterval(scanTimer);
+            finishAutomaticScan();
+            return;
+          }
+
+          const message =
+            scannerMessages[messageIndex];
+
+          const progress =
+            (
+              (messageIndex + 1) /
+              scannerMessages.length
+            ) * 100;
+
+          scannerReadout.textContent =
+            message.text;
+
+          liveScan.classList.toggle(
+            "is-alert",
+            message.alert
+          );
+
+          scanFill.style.width =
+            progress + "%";
+
+          scanPercent.textContent =
+            Math.round(progress) + "%";
+
+          setScore(
+            10 +
+            Math.round(progress * 0.1)
+          );
+        }, 1050);
+    }
+
+    function finishAutomaticScan() {
+      scanComplete = true;
+
+      scanLine.classList.remove("is-active");
+      liveScan.hidden = true;
+      scanCompleteCard.hidden = false;
+
+      imageStatus.textContent =
+        "SCAN COMPLETE";
+
+      statusText.textContent =
+        "BEHAVIOR REVIEW REQUIRED";
+
+      completeTest(
+        testScan,
+        "COMPLETE"
+      );
+
+      setScore(20);
+
+      instruction.textContent =
+        "Answer two behavior questions";
+
+      showInstruction();
+
+      window.setTimeout(function () {
+        scanCompleteCard.hidden = true;
+        showQuestionOne();
+      }, 1100);
+    }
+
+    function updateBehaviorScore() {
+      if (
+        eyeContactAnswer === "yes" &&
+        approachAnswer === "calm"
+      ) {
+        setScore(88);
+        return;
+      }
+
+      if (
+        eyeContactAnswer === "no" &&
+        approachAnswer === "bread"
+      ) {
+        setScore(8);
+        return;
+      }
+
+      if (
+        eyeContactAnswer === "yes" &&
+        approachAnswer === "bread"
+      ) {
+        setScore(58);
+        return;
+      }
+
+      if (
+        eyeContactAnswer === "no" &&
+        approachAnswer === "calm"
+      ) {
+        setScore(62);
+      }
+    }
+
+    function selectAnswer(button) {
+      const question =
+        button.dataset.question;
+
+      const answer =
+        button.dataset.answer;
+
+      document
+        .querySelectorAll(
+          '[data-question="' +
+          question +
+          '"]'
+        )
+        .forEach(function (item) {
+          item.classList.remove("is-selected");
+          item.disabled = true;
+        });
+
+      button.classList.add("is-selected");
+
+      if (question === "one") {
+        questionOneAnswered = true;
+        eyeContactAnswer = answer;
+
+        if (answer === "yes") {
+          statusText.textContent =
+            "EYE CONTACT EXCESSIVE";
+        } else {
+          statusText.textContent =
+            "EYE CONTACT NORMAL";
+        }
+
+        window.setTimeout(
+          showQuestionTwo,
+          450
+        );
+      }
+
+      if (question === "two") {
+        questionTwoAnswered = true;
+        approachAnswer = answer;
+
+        updateBehaviorScore();
+
+        if (answer === "calm") {
+          statusText.textContent =
+            "TRAINING SUSPECTED";
+        } else {
+          statusText.textContent =
+            "BREAD MOTIVATION CONFIRMED";
+        }
+
+        completeTest(
+          testBehavior,
+          "COMPLETE"
+        );
+
+        instruction.textContent =
+          "Behavior review complete. Run the final diagnostic";
+
+        showInstruction();
+
+        actionButton.disabled = false;
+        actionButton.textContent =
+          "RUN DIAGNOSTIC";
+      }
+    }
+
+    answerButtons.forEach(function (button) {
+      button.addEventListener(
+        "click",
+        function () {
+          selectAnswer(button);
+        }
+      );
+    });
+
+    startScanButton.addEventListener(
+      "click",
+      startAutomaticScan
+    );
+
+    actionButton.addEventListener(
+      "click",
+      function () {
+        if (
+          !scanComplete ||
+          !questionOneAnswered ||
+          !questionTwoAnswered
+        ) {
+          return;
+        }
+
+        actionButton.disabled = true;
+        actionButton.textContent =
+          "CHECKING SHEEP";
+
+        scanLine.classList.add("is-active");
+
+        const messages = [
+          "LOOKING AT THE SHEEP",
+          "CHECKING FOR WIRES",
+          "REVIEWING BENCH HISTORY",
+          "CONTACTING REFERENCES",
+          "REFERENCES ARE SHEEP"
+        ];
+
+        let index = 0;
+
+        statusText.textContent =
+          messages[0];
+
+        instruction.textContent =
+          "Give us a second. This sheep has a lot going on";
+
+        showInstruction();
+
+        diagnosticTimer =
+          window.setInterval(function () {
+            index += 1;
+
+            if (index < messages.length) {
+              statusText.textContent =
+                messages[index];
+            } else {
+              window.clearInterval(
+                diagnosticTimer
+              );
+
+              window.setTimeout(function () {
+                scanLine.classList.remove(
+                  "is-active"
+                );
+
+                showResult();
+              }, 900);
+            }
+          }, 1050);
+      }
+    );
+
+    function chooseResultGroup() {
+      if (
+        eyeContactAnswer === "yes" &&
+        approachAnswer === "calm"
+      ) {
+        return resultGroups.high;
+      }
+
+      if (
+        eyeContactAnswer === "no" &&
+        approachAnswer === "bread"
+      ) {
+        return resultGroups.low;
+      }
+
+      return resultGroups.medium;
+    }
+
+    function showResult() {
+      const group =
+        chooseResultGroup();
+
+      const selectedResult =
+        randomItem(group.results);
+
+      resultTitle.textContent =
+        randomItem(group.verdicts);
+
+      resultStamp.textContent =
+        randomItem(group.stamps);
+
+      resultScore.textContent =
+        selectedResult.percent + "%";
+
+      resultSentence.textContent =
+        selectedResult.sentence;
+
+      resultFindings.innerHTML = "";
+
+      shuffle(group.findings)
+        .slice(0, 4)
+        .forEach(function (finding) {
+          const item =
+            document.createElement("li");
+
+          item.textContent =
+            finding.replace(/[.!?]+$/, "");
+
+          resultFindings.appendChild(item);
+        });
+
+      mainScreen.hidden = true;
+      resultScreen.hidden = false;
+    }
+
+    function resetTestStateOnly() {
+      if (scanTimer) {
+        window.clearInterval(scanTimer);
+      }
+
+      if (diagnosticTimer) {
+        window.clearInterval(diagnosticTimer);
+      }
+
+      scanComplete = false;
+      questionOneAnswered = false;
+      questionTwoAnswered = false;
+
+      eyeContactAnswer = null;
+      approachAnswer = null;
+
+      scanStartCard.hidden = true;
+      scanCompleteCard.hidden = true;
+      liveScan.hidden = true;
+
+      scanLine.classList.remove("is-active");
+
+      scanFill.style.width = "0%";
+      scanPercent.textContent = "0%";
+
+      answerButtons.forEach(function (button) {
+        button.classList.remove("is-selected");
+        button.disabled = false;
+      });
+
+      [
+        testUpload,
+        testScan,
+        testBehavior
+      ].forEach(function (test) {
+        test.classList.remove("is-complete");
+        test.querySelector("b").textContent = "—";
+      });
+
+      showInstruction();
+    }
+
+    function resetApp() {
+      input.value = "";
+
+      resetTestStateOnly();
+
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+        imageUrl = "";
+      }
+
+      uploadPanel.hidden = false;
+      imagePanel.hidden = true;
+
+      mainScreen.hidden = false;
+      resultScreen.hidden = true;
+
+      sheepImage.removeAttribute("src");
+      resultImage.removeAttribute("src");
+
+      caseNumber.textContent =
+        "CASE: UNASSIGNED";
+
+      imageStatus.textContent =
+        "SUBJECT RECEIVED";
+
+      statusText.textContent =
+        "NO EVIDENCE";
+
+      instruction.textContent =
+        "Tap above to upload a sheep photograph";
+
+      actionButton.disabled = true;
+      actionButton.textContent =
+        "AWAITING EVIDENCE";
+
+      setScore(0);
+    }
+
+    input.addEventListener(
+      "change",
+      function () {
+        loadImage(input.files[0]);
+      }
+    );
+
+    resetButton.addEventListener(
+      "click",
+      resetApp
+    );
+
+    scanAgainButton.addEventListener(
+      "click",
+      resetApp
+    );
+
+    setScore(0);
+  });
+</script>
+</body></html>
