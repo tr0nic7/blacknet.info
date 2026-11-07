@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body>
+<div class="sheep-widget">
+  <div class="sheep-stage" id="sheepStage">
+    <img
+      class="sheep-image sheep-normal"
+      src="../assets/sheep-normal.png?v=116eeb948f4f6912"
+      alt="Sheep"
+    >
+
+    <div class="xray-mask" id="xrayMask">
+      <img
+        class="sheep-image sheep-xray"
+        src="../assets/sheep-xray.png?v=56f3437d24e1eae2"
+        alt="X-ray sheep"
+      >
+    </div>
+
+    <div class="trail-layer" id="trailLayer"></div>
+
+    <div class="scanner" id="scanner">
+      <div class="scanner-dot"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  :root {
+    --orange: #ff4f12;
+    --scanner-size: 170px;
+    --scanner-radius: 85px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: transparent;
+  }
+
+  .sheep-widget {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: var(--scanner-radius);
+    overflow: hidden;
+  }
+
+  .sheep-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    cursor: none;
+  }
+
+  .sheep-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    transform: translate(-50%, -50%);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .xray-mask {
+    position: absolute;
+    inset: 0;
+    clip-path: circle(0px at 50% 50%);
+    pointer-events: none;
+  }
+
+  .trail-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    pointer-events: none;
+  }
+
+  .scanner-trail {
+    position: absolute;
+    width: var(--scanner-size);
+    height: var(--scanner-size);
+    border: 1px solid rgba(255, 79, 18, 0.22);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow:
+      0 0 10px rgba(255, 79, 18, 0.12),
+      inset 0 0 10px rgba(255, 79, 18, 0.05);
+    animation: trailFade 420ms ease-out forwards;
+  }
+
+  @keyframes trailFade {
+    from {
+      opacity: 0.28;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    to {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(1.035);
+    }
+  }
+
+  .scanner {
+    position: absolute;
+    z-index: 10;
+    width: var(--scanner-size);
+    height: var(--scanner-size);
+    border: 2px solid var(--orange);
+    border-radius: 50%;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    box-shadow:
+      0 0 18px rgba(255, 79, 18, 0.68),
+      inset 0 0 18px rgba(255, 79, 18, 0.14);
+    pointer-events: none;
+  }
+
+  .scanner::before,
+  .scanner::after {
+    content: "";
+    position: absolute;
+    background: var(--orange);
+  }
+
+  .scanner::before {
+    top: 50%;
+    left: -12px;
+    width: calc(100% + 24px);
+    height: 1px;
+  }
+
+  .scanner::after {
+    top: -12px;
+    left: 50%;
+    width: 1px;
+    height: calc(100% + 24px);
+  }
+
+  .scanner-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--orange);
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px var(--orange);
+  }
+</style>
+
+<script>
+  window.addEventListener("load", function () {
+    const stage = document.getElementById("sheepStage");
+    const scanner = document.getElementById("scanner");
+    const xrayMask = document.getElementById("xrayMask");
+    const trailLayer = document.getElementById("trailLayer");
+
+    const scannerRadius = 85;
+
+    let lastTrailTime = 0;
+    const trailInterval = 70;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function createTrail(x, y) {
+      if (reduceMotion) return;
+      const trail = document.createElement("div");
+
+      trail.className = "scanner-trail";
+      trail.style.left = x + "px";
+      trail.style.top = y + "px";
+
+      trailLayer.appendChild(trail);
+
+      window.setTimeout(function () {
+        trail.remove();
+      }, 450);
+    }
+
+    stage.style.touchAction = "none";
+
+    stage.addEventListener("pointerdown", function (event) {
+      if (event.pointerType !== "mouse") {
+        event.preventDefault();
+        try { stage.setPointerCapture(event.pointerId); } catch (e) {}
+      }
+    });
+
+    stage.addEventListener("pointermove", function (event) {
+      if (event.pointerType !== "mouse") event.preventDefault();
+      const rect = stage.getBoundingClientRect();
+
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      scanner.style.left = x + "px";
+      scanner.style.top = y + "px";
+      scanner.style.opacity = "1";
+
+      xrayMask.style.clipPath =
+        `circle(${scannerRadius}px at ${x}px ${y}px)`;
+
+      const now = performance.now();
+
+      if (now - lastTrailTime > trailInterval) {
+        createTrail(x, y);
+        lastTrailTime = now;
+      }
+    });
+
+    stage.addEventListener("pointerleave", function () {
+      scanner.style.opacity = "0";
+
+      xrayMask.style.clipPath =
+        "circle(0px at 50% 50%)";
+
+      trailLayer.innerHTML = "";
+    });
+  });
+</script>
+</body></html>

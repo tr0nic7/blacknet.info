@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head><body>
+<div class="footprint-stage" id="footprintStage"></div>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: #000000;
+  }
+
+  .footprint-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    overflow: hidden;
+    background: #000000;
+    pointer-events: none;
+  }
+
+  .sheep-track {
+    position: absolute;
+    width: 34px;
+    height: 46px;
+    opacity: 0;
+    transform-origin: center;
+    pointer-events: none;
+    will-change: opacity, transform;
+    animation:
+      footprintLand 180ms ease-out forwards,
+      footprintFade 1100ms ease-in forwards;
+    animation-delay:
+      0ms,
+      var(--fade-delay);
+  }
+
+  .sheep-track svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .sheep-track path,
+  .sheep-track ellipse {
+    fill: rgba(241, 241, 236, var(--print-opacity));
+  }
+
+  .sheep-track.is-orange path,
+  .sheep-track.is-orange ellipse {
+    fill: rgba(255, 79, 18, 0.18);
+  }
+
+  @keyframes footprintLand {
+    from {
+      opacity: 0;
+      transform:
+        translate(-50%, -50%)
+        rotate(var(--rotation))
+        scale(0.68);
+    }
+
+    65% {
+      opacity: 1;
+      transform:
+        translate(-50%, -50%)
+        rotate(var(--rotation))
+        scale(1.08);
+    }
+
+    to {
+      opacity: 1;
+      transform:
+        translate(-50%, -50%)
+        rotate(var(--rotation))
+        scale(1);
+    }
+  }
+
+  @keyframes footprintFade {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .sheep-track {
+      width: 27px;
+      height: 37px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sheep-track {
+      animation-duration: 0ms, 500ms;
+    }
+  }
+</style>
+
+<script>
+  window.addEventListener("load", function () {
+    const stage = document.getElementById("footprintStage");
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    /*
+     * Each walker is an invisible sheep.
+     * Its left and right feet land alternately.
+     */
+    const walkerSettings = [
+      {
+        startX: 0.08,
+        startY: 0.78,
+        angle: -24,
+        speed: 330,
+        stepLength: 48,
+        footSpacing: 12,
+        opacity: 0.18,
+        delay: 200
+      },
+      {
+        startX: 0.88,
+        startY: 0.25,
+        angle: 158,
+        speed: 390,
+        stepLength: 44,
+        footSpacing: 11,
+        opacity: 0.12,
+        delay: 1200
+      },
+      {
+        startX: 0.25,
+        startY: 0.08,
+        angle: 68,
+        speed: 360,
+        stepLength: 46,
+        footSpacing: 12,
+        opacity: 0.15,
+        delay: 2300
+      }
+    ];
+
+    const walkers = [];
+
+    function degreesToRadians(degrees) {
+      return degrees * Math.PI / 180;
+    }
+
+    function createFootSVG(side) {
+      const mirror =
+        side === "right"
+          ? 'transform="translate(60 0) scale(-1 1)"'
+          : "";
+
+      return `
+        <svg viewBox="0 0 60 82" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <g ${mirror}>
+            <ellipse cx="22" cy="24" rx="8" ry="16" transform="rotate(-16 22 24)"/>
+            <ellipse cx="38" cy="24" rx="8" ry="16" transform="rotate(16 38 24)"/>
+            <path d="M16 36 C22 58 38 58 44 36 C36 46 24 46 16 36 Z"/>
+          </g>
+        </svg>
+      `;
+    }
+
+    function createFootprint(walker) {
+      const foot =
+        document.createElement("div");
+
+      foot.className =
+        "sheep-track";
+
+      /*
+       * Occasionally leave one faint orange trace.
+       */
+      if (Math.random() < 0.04) {
+        foot.classList.add("is-orange");
+      }
+
+      const direction =
+        degreesToRadians(walker.angle);
+
+      /*
+       * Perpendicular direction controls the
+       * left/right separation between feet.
+       */
+      const perpendicularX =
+        -Math.sin(direction);
+
+      const perpendicularY =
+        Math.cos(direction);
+
+      const sideMultiplier =
+        walker.nextFoot === "left"
+          ? -1
+          : 1;
+
+      const landingX =
+        walker.x +
+        perpendicularX *
+        walker.footSpacing *
+        sideMultiplier;
+
+      const landingY =
+        walker.y +
+        perpendicularY *
+        walker.footSpacing *
+        sideMultiplier;
+
+      foot.style.left =
+        landingX + "px";
+
+      foot.style.top =
+        landingY + "px";
+
+      foot.style.setProperty(
+        "--rotation",
+        walker.angle + 90 +
+        (sideMultiplier * 5) +
+        "deg"
+      );
+
+      foot.style.setProperty(
+        "--print-opacity",
+        walker.opacity
+      );
+
+      foot.style.setProperty(
+        "--fade-delay",
+        walker.printLifetime + "ms"
+      );
+
+      foot.innerHTML =
+        createFootSVG(walker.nextFoot);
+
+      stage.appendChild(foot);
+
+      window.setTimeout(function () {
+        foot.remove();
+      }, walker.printLifetime + 1300);
+    }
+
+    function advanceWalker(walker) {
+      createFootprint(walker);
+
+      walker.nextFoot =
+        walker.nextFoot === "left"
+          ? "right"
+          : "left";
+
+      /*
+       * Move the invisible sheep forward
+       * after placing each foot.
+       */
+      const direction =
+        degreesToRadians(walker.angle);
+
+      walker.x +=
+        Math.cos(direction) *
+        walker.stepLength;
+
+      walker.y +=
+        Math.sin(direction) *
+        walker.stepLength;
+
+      /*
+       * Small natural wandering rather than
+       * perfectly straight paths.
+       */
+      walker.angle +=
+        (Math.random() - 0.5) * 8;
+
+      walker.steps += 1;
+
+      if (
+        walker.steps >= walker.maximumSteps ||
+        isOutsideStage(walker)
+      ) {
+        restartWalker(walker);
+        return;
+      }
+
+      walker.timer =
+        window.setTimeout(
+          function () {
+            advanceWalker(walker);
+          },
+          walker.speed +
+          (Math.random() - 0.5) * 70
+        );
+    }
+
+    function isOutsideStage(walker) {
+      const margin = 90;
+
+      return (
+        walker.x < -margin ||
+        walker.x > stage.clientWidth + margin ||
+        walker.y < -margin ||
+        walker.y > stage.clientHeight + margin
+      );
+    }
+
+    function chooseNewStart(walker) {
+      const side =
+        Math.floor(Math.random() * 4);
+
+      if (side === 0) {
+        walker.x = -40;
+        walker.y =
+          stage.clientHeight *
+          (0.15 + Math.random() * 0.7);
+
+        walker.angle =
+          -25 + Math.random() * 50;
+      }
+
+      if (side === 1) {
+        walker.x =
+          stage.clientWidth + 40;
+
+        walker.y =
+          stage.clientHeight *
+          (0.15 + Math.random() * 0.7);
+
+        walker.angle =
+          155 + Math.random() * 50;
+      }
+
+      if (side === 2) {
+        walker.x =
+          stage.clientWidth *
+          (0.15 + Math.random() * 0.7);
+
+        walker.y = -40;
+
+        walker.angle =
+          65 + Math.random() * 50;
+      }
+
+      if (side === 3) {
+        walker.x =
+          stage.clientWidth *
+          (0.15 + Math.random() * 0.7);
+
+        walker.y =
+          stage.clientHeight + 40;
+
+        walker.angle =
+          245 + Math.random() * 50;
+      }
+    }
+
+    function restartWalker(walker) {
+      window.clearTimeout(walker.timer);
+
+      chooseNewStart(walker);
+
+      walker.steps = 0;
+
+      walker.maximumSteps =
+        12 +
+        Math.floor(Math.random() * 14);
+
+      walker.nextFoot =
+        Math.random() > 0.5
+          ? "left"
+          : "right";
+
+      walker.timer =
+        window.setTimeout(
+          function () {
+            advanceWalker(walker);
+          },
+          900 + Math.random() * 2200
+        );
+    }
+
+    function createWalker(settings) {
+      return {
+        x:
+          stage.clientWidth *
+          settings.startX,
+
+        y:
+          stage.clientHeight *
+          settings.startY,
+
+        angle: settings.angle,
+        speed: settings.speed,
+        stepLength: settings.stepLength,
+        footSpacing: settings.footSpacing,
+        opacity: settings.opacity,
+
+        printLifetime:
+          2300 + Math.random() * 900,
+
+        nextFoot:
+          Math.random() > 0.5
+            ? "left"
+            : "right",
+
+        steps: 0,
+
+        maximumSteps:
+          14 +
+          Math.floor(Math.random() * 10),
+
+        delay: settings.delay,
+        timer: null
+      };
+    }
+
+    function startEverything() {
+      walkerSettings.forEach(function (
+        settings
+      ) {
+        const walker =
+          createWalker(settings);
+
+        walkers.push(walker);
+
+        walker.timer =
+          window.setTimeout(
+            function () {
+              advanceWalker(walker);
+            },
+            walker.delay
+          );
+      });
+    }
+
+    window.addEventListener(
+      "resize",
+      function () {
+        walkers.forEach(function (walker) {
+          restartWalker(walker);
+        });
+      }
+    );
+
+    startEverything();
+  });
+</script>
+</body></html>
